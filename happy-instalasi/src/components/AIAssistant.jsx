@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_ENDPOINTS, apiRequest } from '../config/api';
 
 const AIAssistant = ({ deviceSpecs, library }) => {
   const [messages, setMessages] = useState([
@@ -15,65 +16,39 @@ const AIAssistant = ({ deviceSpecs, library }) => {
 
     const userMessage = { role: 'user', content: input };
     setMessages([...messages, userMessage]);
+    const currentInput = input;
     setInput('');
     setIsLoading(true);
 
-    // Simulate AI response (replace with actual AI API call)
-    setTimeout(() => {
-      const aiResponse = generateResponse(input);
-      setMessages(prev => [...prev, { role: 'assistant', content: aiResponse }]);
+    try {
+      // Call backend AI API
+      const response = await apiRequest(API_ENDPOINTS.aiChat, {
+        method: 'POST',
+        body: JSON.stringify({
+          message: currentInput,
+          context: {
+            deviceSpecs,
+            library
+          }
+        })
+      });
+
+      const aiMessage = {
+        role: 'assistant',
+        content: response.data.aiResponse,
+        suggestions: response.data.suggestions
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      const errorMessage = {
+        role: 'assistant',
+        content: `❌ Error: ${error.message}\n\nPastikan backend server sudah running di http://localhost:5000`
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
-  };
-
-  const generateResponse = (question) => {
-    const lowerQuestion = question.toLowerCase();
-    
-    // Simple rule-based responses (replace with actual AI API)
-    if (lowerQuestion.includes('error') || lowerQuestion.includes('gagal')) {
-      return `Untuk mengatasi error instalasi ${library?.name || 'library'}:
-
-1. Pastikan semua dependencies sudah terinstall
-2. Check compiler version compatibility
-3. Verify environment variables
-4. Try running as administrator (Windows) atau sudo (Linux)
-
-Bisa share error message lengkapnya untuk analisis lebih detail?`;
     }
-    
-    if (lowerQuestion.includes('compile')) {
-      return `Tips untuk compile ${library?.name || 'project'}:
-
-1. Pastikan include paths sudah benar
-2. Link semua required libraries
-3. Check compiler flags
-4. Verify library versions compatibility
-
-Contoh compile command sudah tersedia di section "Installation Commands" di atas.`;
-    }
-
-    if (lowerQuestion.includes('vulkan') || lowerQuestion.includes('opengl')) {
-      return `Untuk instalasi graphics library:
-
-1. Update GPU drivers ke versi terbaru
-2. Verify GPU support untuk API yang dipilih
-3. Install SDK yang sesuai dengan OS
-4. Set environment variables dengan benar
-
-GPU Anda: ${deviceSpecs?.gpu || 'Not specified'}
-OS: ${deviceSpecs?.os || 'Not specified'}`;
-    }
-
-    return `Saya siap membantu! Untuk pertanyaan lebih spesifik, coba jelaskan:
-- Error message yang muncul
-- Step yang sudah dilakukan
-- OS dan compiler yang digunakan
-
-Atau tanyakan tentang:
-- Installation steps
-- Compile errors
-- Library configuration
-- Environment setup`;
   };
 
   const handleKeyPress = (e) => {

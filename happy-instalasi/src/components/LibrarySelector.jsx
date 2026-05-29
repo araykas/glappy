@@ -1,58 +1,42 @@
-import React, { useState } from 'react';
-
-const libraries = [
-  {
-    id: 'opengl',
-    name: 'OpenGL',
-    description: 'Cross-platform graphics API',
-    difficulty: 'Medium',
-    icon: '🎨',
-    available: true
-  },
-  {
-    id: 'vulkan',
-    name: 'Vulkan',
-    description: 'Low-level graphics API',
-    difficulty: 'Hard',
-    icon: '🔥',
-    available: false
-  },
-  {
-    id: 'glfw',
-    name: 'GLFW',
-    description: 'Window and input library',
-    difficulty: 'Easy',
-    icon: '🪟',
-    available: false
-  },
-  {
-    id: 'glew',
-    name: 'GLEW',
-    description: 'OpenGL Extension Wrangler',
-    difficulty: 'Easy',
-    icon: '⚡',
-    available: false
-  },
-  {
-    id: 'sdl',
-    name: 'SDL2',
-    description: 'Simple DirectMedia Layer',
-    difficulty: 'Easy',
-    icon: '🎮',
-    available: false
-  },
-  {
-    id: 'glad',
-    name: 'GLAD',
-    description: 'OpenGL loader',
-    difficulty: 'Easy',
-    icon: '✨',
-    available: false
-  }
-];
+import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS, apiRequest } from '../config/api';
 
 const LibrarySelector = ({ onSelect }) => {
   const [selectedLibrary, setSelectedLibrary] = useState(null);
+  const [libraries, setLibraries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch libraries dari backend
+  useEffect(() => {
+    const fetchLibraries = async () => {
+      try {
+        setLoading(true);
+        const response = await apiRequest(API_ENDPOINTS.libraries);
+        
+        // Map data dari backend ke format yang dibutuhkan
+        const mappedLibraries = response.data.map(lib => ({
+          id: lib.id,
+          name: lib.name,
+          description: lib.description,
+          difficulty: lib.difficulty,
+          icon: lib.icon,
+          available: !lib.comingSoon,
+          platforms: lib.platforms
+        }));
+        
+        setLibraries(mappedLibraries);
+        setError(null);
+      } catch (err) {
+        setError('Gagal memuat data library. Pastikan backend sudah running.');
+        console.error('Error fetching libraries:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLibraries();
+  }, []);
 
   const handleSelect = (library) => {
     if (!library.available) {
@@ -72,6 +56,40 @@ const LibrarySelector = ({ onSelect }) => {
     }
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="card">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600"></div>
+          <span className="ml-3 text-gray-600">Loading libraries...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="card">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-start">
+            <svg className="w-6 h-6 text-red-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <h3 className="text-red-800 font-semibold mb-1">❌ Error Loading Libraries</h3>
+              <p className="text-red-700 text-sm">{error}</p>
+              <p className="text-red-600 text-xs mt-2">
+                Pastikan backend server sudah running di <code className="bg-red-100 px-1 rounded">http://localhost:5000</code>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="card">
       <div className="flex items-center space-x-2 mb-4">
@@ -79,6 +97,9 @@ const LibrarySelector = ({ onSelect }) => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
         </svg>
         <h2 className="text-xl font-bold text-gray-800">Pilih Library</h2>
+        <span className="ml-auto text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+          ✅ Connected to Backend
+        </span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
