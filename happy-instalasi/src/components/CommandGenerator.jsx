@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { API_ENDPOINTS, apiRequest } from '../config/api';
+import { getSessionId } from '../config/session';
 
 const CommandGenerator = ({ library, deviceSpecs }) => {
   const [commands, setCommands] = useState([]);
@@ -26,6 +27,7 @@ const CommandGenerator = ({ library, deviceSpecs }) => {
         method: 'POST',
         body: JSON.stringify({
           libraryId: library.id,
+          sessionId: getSessionId(),
           deviceSpecs: {
             os: deviceSpecs.os,
             cpu: deviceSpecs.cpu,

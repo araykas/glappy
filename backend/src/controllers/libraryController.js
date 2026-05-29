@@ -1,24 +1,59 @@
 import { getAllLibraries, getLibraryById } from '../data/librariesData.js';
+import { getAllLibrariesFromDB, getLibraryByIdFromDB } from '../services/databaseService.js';
+import { isSupabaseConfigured } from '../config/supabase.js';
 import { AppError } from '../middleware/errorHandler.js';
 
-export const getLibraries = (req, res, next) => {
+export const getLibraries = async (req, res, next) => {
   try {
-    const libraries = getAllLibraries();
+    let libraries;
+
+    // Try to get from database first
+    if (isSupabaseConfigured()) {
+      const result = await getAllLibrariesFromDB();
+      if (result.success) {
+        libraries = result.data;
+      } else {
+        // Fallback to static data if database fails
+        console.warn('⚠️  Database query failed, using static data');
+        libraries = getAllLibraries();
+      }
+    } else {
+      // Use static data if database not configured
+      libraries = getAllLibraries();
+    }
     
     res.json({
       success: true,
       count: libraries.length,
-      data: libraries
+      data: libraries,
+      source: isSupabaseConfigured() ? 'database' : 'static'
     });
   } catch (error) {
     next(error);
   }
 };
 
-export const getLibraryDetails = (req, res, next) => {
+export const getLibraryDetails = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const library = getLibraryById(id);
+    let library;
+
+    // Try to get from database first
+    if (isSupabaseConfigured()) {
+      const result = await getLibraryByIdFromDB(id);
+      if (result.success) {
+        library = result.data;
+      } else if (result.error === 'Library not found') {
+        throw new AppError(`Library with id '${id}' not found`, 404);
+      } else {
+        // Fallback to static data if database fails
+        console.warn('⚠️  Database query failed, using static data');
+        library = getLibraryById(id);
+      }
+    } else {
+      // Use static data if database not configured
+      library = getLibraryById(id);
+    }
 
     if (!library) {
       throw new AppError(`Library with id '${id}' not found`, 404);
@@ -26,7 +61,8 @@ export const getLibraryDetails = (req, res, next) => {
 
     res.json({
       success: true,
-      data: library
+      data: library,
+      source: isSupabaseConfigured() ? 'database' : 'static'
     });
   } catch (error) {
     next(error);

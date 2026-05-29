@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { API_ENDPOINTS, apiRequest } from '../config/api';
 
 const LibrarySelector = ({ onSelect }) => {

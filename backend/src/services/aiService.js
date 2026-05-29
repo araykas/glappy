@@ -1,11 +1,127 @@
 // AI Service dengan dummy responses
 // Nanti bisa diintegrasikan dengan OpenAI, Gemini, atau AI lainnya
 
+// ============================================
+// TOPIC FILTER
+// Cek apakah pesan relevan sebelum panggil AI
+// ============================================
+
+// Keyword yang dianggap relevan dengan topik app
+const RELEVANT_KEYWORDS = [
+  // Library names
+  'opengl', 'vulkan', 'directx', 'dx12', 'dx11', 'glfw', 'glew', 'glad', 'sdl',
+  // Installation & setup
+  'install', 'instalasi', 'setup', 'download', 'unduh',
+  // Build & compile
+  'compile', 'build', 'kompilasi', 'gcc', 'g++', 'msvc', 'clang', 'mingw',
+  // Errors
+  'error', 'gagal', 'failed', 'crash', 'bug', 'masalah', 'problem', 'issue',
+  // Linking
+  'link', 'linker', 'undefined reference', 'unresolved external', 'lib', '.dll', '.so', '.a',
+  // Tools
+  'cmake', 'makefile', 'vcpkg', 'apt', 'brew', 'homebrew', 'pkg-config',
+  // Environment
+  'path', 'environment', 'env', 'variable', 'not found', 'tidak ditemukan',
+  // Graphics / GPU
+  'gpu', 'graphics', 'grafis', 'driver', 'shader', 'render', 'opengl', 'vulkan',
+  // OS
+  'windows', 'linux', 'macos', 'ubuntu', 'debian',
+  // Headers & includes
+  'include', 'header', '.h', 'dependency', 'dependencies',
+  // General programming (masih relevan)
+  'code', 'kode', 'program', 'project', 'proyek', 'cpp', 'c++',
+];
+
+// Keyword yang jelas di luar topik
+const IRRELEVANT_KEYWORDS = [
+  // Makanan & minuman
+  'makan', 'minum', 'masak', 'resep', 'makanan', 'minuman', 'restoran', 'warung',
+  // Hiburan
+  'film', 'movie', 'musik', 'lagu', 'drama', 'anime', 'game', 'gaming',
+  // Sosial & berita
+  'politik', 'berita', 'news', 'artis', 'selebritis', 'gosip',
+  // Cuaca
+  'cuaca', 'weather', 'hujan', 'panas', 'dingin',
+  // Olahraga
+  'bola', 'sepakbola', 'basket', 'olahraga', 'sport',
+  // Keuangan personal
+  'saham', 'crypto', 'bitcoin', 'investasi', 'trading',
+  // Kesehatan umum
+  'sakit', 'obat', 'dokter', 'rumah sakit',
+  // Percakapan umum
+  'halo', 'hai', 'hello', 'apa kabar', 'how are you',
+];
+
+/**
+ * Cek apakah pesan relevan dengan topik instalasi library.
+ * Return: { relevant: boolean, reason: string }
+ */
+export const checkTopicRelevance = (message) => {
+  const lower = message.toLowerCase();
+
+  // Cek keyword tidak relevan dulu (lebih spesifik)
+  const irrelevantMatch = IRRELEVANT_KEYWORDS.find(kw => lower.includes(kw));
+  if (irrelevantMatch) {
+    return { relevant: false, reason: 'off_topic' };
+  }
+
+  // Cek keyword relevan
+  const relevantMatch = RELEVANT_KEYWORDS.find(kw => lower.includes(kw));
+  if (relevantMatch) {
+    return { relevant: true, reason: 'keyword_match' };
+  }
+
+  // Pesan pendek (< 10 kata) yang tidak match keyword apapun → anggap off-topic
+  const wordCount = message.trim().split(/\s+/).length;
+  if (wordCount < 4) {
+    return { relevant: false, reason: 'too_short_no_match' };
+  }
+
+  // Default: anggap relevan kalau tidak jelas off-topic
+  // Lebih baik false negative (jawab yang tidak perlu) daripada false positive (tolak yang valid)
+  return { relevant: true, reason: 'default_allow' };
+};
+
+/**
+ * Template response untuk pertanyaan di luar topik.
+ * Tidak memanggil AI sama sekali — 0 token.
+ */
+export const getOffTopicResponse = (library) => ({
+  message: `Maaf, saya hanya bisa membantu seputar instalasi dan konfigurasi graphics library${library?.name ? ` (${library.name})` : ''}.
+
+Topik yang bisa saya bantu:
+- 📦 Instalasi library (OpenGL, Vulkan, DirectX)
+- ⚙️ Compile & build errors
+- 🔗 Linking issues
+- 🛣️ Setup PATH & environment variables
+- 🔧 CMake configuration
+- 🎮 GPU driver & graphics troubleshooting
+
+Silakan tanyakan masalah yang berkaitan dengan topik di atas! 😊`,
+  suggestions: [
+    'Bagaimana cara install OpenGL di Windows?',
+    'Error saat compile, apa yang harus dilakukan?',
+    'Bagaimana setup environment variables?',
+    'CMake tidak bisa find library',
+  ],
+  offTopic: true,
+});
+
+// ============================================
+// MAIN AI RESPONSE GENERATOR
+// ============================================
+
 export const generateAIResponse = (message, context = {}) => {
   const lowerMessage = message.toLowerCase();
   const { deviceSpecs, library } = context;
 
-  // Rule-based responses (dummy AI)
+  // ── FILTER: cek topik sebelum proses ──
+  const topicCheck = checkTopicRelevance(message);
+  if (!topicCheck.relevant) {
+    return getOffTopicResponse(library);
+  }
+
+  // ── Rule-based responses (dummy AI) ──
   // Nanti ganti dengan actual AI API call
 
   // Error handling responses
@@ -40,7 +156,7 @@ Bisa share error message lengkapnya untuk analisis lebih detail? 🔍`,
   }
 
   // Compile issues
-  if (lowerMessage.includes('compile') || lowerMessage.includes('build')) {
+  if (lowerMessage.includes('compile') || lowerMessage.includes('build') || lowerMessage.includes('kompilasi')) {
     return {
       message: `Tips untuk compile ${library?.name || 'project'} di ${deviceSpecs?.os || 'sistem Anda'}:
 
@@ -99,7 +215,7 @@ Bisa share error message lengkapnya untuk analisis lebih detail? 🔍`,
   }
 
   // GPU/Graphics specific
-  if (lowerMessage.includes('vulkan') || lowerMessage.includes('opengl') || lowerMessage.includes('gpu') || lowerMessage.includes('graphics')) {
+  if (lowerMessage.includes('vulkan') || lowerMessage.includes('opengl') || lowerMessage.includes('gpu') || lowerMessage.includes('graphics') || lowerMessage.includes('grafis') || lowerMessage.includes('driver')) {
     return {
       message: `Untuk instalasi graphics library di sistem Anda:
 
@@ -136,7 +252,7 @@ Bisa share error message lengkapnya untuk analisis lebih detail? 🔍`,
   }
 
   // Path/Environment issues
-  if (lowerMessage.includes('path') || lowerMessage.includes('environment') || lowerMessage.includes('not found')) {
+  if (lowerMessage.includes('path') || lowerMessage.includes('environment') || lowerMessage.includes('not found') || lowerMessage.includes('tidak ditemukan')) {
     return {
       message: `Untuk setup PATH dan environment variables:
 
@@ -200,9 +316,41 @@ Bisa share error message lengkapnya untuk analisis lebih detail? 🔍`,
     };
   }
 
-  // Default response
+  // Install / setup general
+  if (lowerMessage.includes('install') || lowerMessage.includes('instalasi') || lowerMessage.includes('setup') || lowerMessage.includes('download')) {
+    return {
+      message: `Panduan instalasi ${library?.name || 'library'} di ${deviceSpecs?.os || 'sistem Anda'}:
+
+1. **Pilih package manager yang sesuai OS**
+   - Windows: vcpkg atau manual download
+   - Linux: apt-get / pacman / dnf
+   - macOS: Homebrew
+
+2. **Install dependencies terlebih dahulu**
+   - Pastikan compiler sudah terinstall
+   - Install semua library yang dibutuhkan
+
+3. **Ikuti installation commands yang sudah digenerate**
+   - Jalankan sesuai urutan
+   - Pastikan ada akses administrator/sudo
+
+4. **Verifikasi instalasi**
+   - Coba compile contoh kode sederhana
+   - Pastikan tidak ada error
+
+Sudah generate installation commands? Kalau belum, pilih library dan isi device specs di tab Setup! 📋`,
+      suggestions: [
+        `Cara install ${library?.name || 'library'} di Windows?`,
+        'Apa saja dependencies yang dibutuhkan?',
+        'Bagaimana verifikasi instalasi berhasil?',
+        'Error saat install, apa yang harus dilakukan?'
+      ]
+    };
+  }
+
+  // Default response — masih relevan tapi tidak match keyword spesifik
   return {
-    message: `Halo! Saya siap membantu dengan instalasi ${library?.name || 'library'} Anda. 
+    message: `Halo! Saya siap membantu dengan instalasi ${library?.name || 'library'} Anda.
 
 Untuk pertanyaan lebih spesifik, coba jelaskan:
 - 🐛 Error message yang muncul (jika ada)
@@ -212,7 +360,7 @@ Untuk pertanyaan lebih spesifik, coba jelaskan:
 
 **Topik yang bisa saya bantu:**
 - Installation steps dan dependencies
-- Compile errors dan linking issues  
+- Compile errors dan linking issues
 - Library configuration dan setup
 - Environment variables dan PATH setup
 - CMake configuration
@@ -228,20 +376,27 @@ Silakan tanyakan masalah spesifik Anda! 😊`,
   };
 };
 
-// Function untuk integrate dengan actual AI API (OpenAI/Gemini)
-// Uncomment dan configure saat siap implementasi
+// ============================================
+// Untuk integrasi AI API nanti (OpenAI/Gemini)
+// Panggil checkTopicRelevance() SEBELUM kirim ke API
+// ============================================
 
 /*
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export const generateAIResponseWithOpenAI = async (message, context = {}) => {
+  // Filter dulu — kalau off-topic, tidak perlu panggil API
+  const topicCheck = checkTopicRelevance(message);
+  if (!topicCheck.relevant) {
+    return getOffTopicResponse(context.library);
+  }
+
   const systemPrompt = `You are an expert installation assistant for graphics libraries like OpenGL, Vulkan, and DirectX.
 Help users troubleshoot installation issues, compile errors, and configuration problems.
 Be concise, practical, and provide step-by-step solutions.
+If the user asks something unrelated to library installation or graphics programming, politely redirect them.
 
 User context:
 - OS: ${context.deviceSpecs?.os || 'Unknown'}
@@ -250,10 +405,10 @@ User context:
 - Library: ${context.library?.name || 'Unknown'}`;
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-4",
+    model: 'gpt-4o-mini', // lebih hemat dari gpt-4
     messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: message }
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: message }
     ],
     temperature: 0.7,
     max_tokens: 500

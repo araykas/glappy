@@ -6,14 +6,28 @@ import {
   generateCMakeFile
 } from '../services/commandService.js';
 import { getLibraryById } from '../data/librariesData.js';
+import { getLibraryByIdFromDB, saveGenerationHistory } from '../services/databaseService.js';
+import { isSupabaseConfigured } from '../config/supabase.js';
 import { AppError } from '../middleware/errorHandler.js';
 
-export const generateCommands = (req, res, next) => {
+export const generateCommands = async (req, res, next) => {
   try {
-    const { libraryId, deviceSpecs } = req.body;
+    const { libraryId, deviceSpecs, sessionId } = req.body;
+
+    // Get library (from database or static data)
+    let library;
+    if (isSupabaseConfigured()) {
+      const result = await getLibraryByIdFromDB(libraryId);
+      if (result.success) {
+        library = result.data;
+      } else {
+        library = getLibraryById(libraryId);
+      }
+    } else {
+      library = getLibraryById(libraryId);
+    }
 
     // Validate library exists
-    const library = getLibraryById(libraryId);
     if (!library) {
       throw new AppError(`Library '${libraryId}' not found`, 404);
     }
@@ -37,6 +51,14 @@ export const generateCommands = (req, res, next) => {
     const pathSetup = generatePathSetup(libraryId, deviceSpecs.os);
     const exampleCode = generateExampleCode(libraryId);
     const cmakeFile = generateCMakeFile(libraryId);
+
+    // Save to database (if configured)
+    if (isSupabaseConfigured() && sessionId) {
+      const saveResult = await saveGenerationHistory(sessionId, libraryId, deviceSpecs);
+      if (!saveResult.success) {
+        console.warn('⚠️  Failed to save generation history:', saveResult.error);
+      }
+    }
 
     res.json({
       success: true,

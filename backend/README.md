@@ -8,6 +8,32 @@ Backend API untuk Happy Instalasi, AI-powered installation assistant untuk graph
 - ✅ **Command Generation** - Generate installation commands berdasarkan OS dan device specs
 - ✅ **AI Assistant** - Chat dengan AI untuk troubleshooting (dummy responses, siap untuk integrasi AI)
 - ✅ **Project Structure Generator** - Generate struktur project yang recommended
+
+## 🗄️ Supabase Integration
+
+Langkah-langkah untuk membuat dan menghubungkan Supabase (free tier):
+
+1. Buat project gratis di https://app.supabase.com dan buka project-nya.
+2. Buka *SQL Editor* di Supabase, buka file `backend/supabase-schema.sql` di repo ini, copy seluruh isinya, lalu jalankan query untuk membuat tabel, view, index, dan function.
+3. Di Supabase, buka Settings → API, salin *Project URL* dan *anon public key*.
+4. Di folder `backend`, buat file `.env` dari `.env.example` dan isi `SUPABASE_URL` dan `SUPABASE_ANON_KEY` dengan nilai dari Supabase:
+  ```bash
+  cd backend
+  cp .env.example .env
+  # lalu edit .env dan paste SUPABASE_URL dan SUPABASE_ANON_KEY
+  ```
+5. Jalankan backend:
+  ```bash
+  npm install
+  npm run dev
+  ```
+6. Tes koneksi database:
+  ```bash
+  curl http://localhost:5000/api/db/test
+  ```
+  Respon JSON harus menunjukkan `success: true` jika koneksi berhasil.
+
+Catatan frontend: frontend hanya memanggil backend API sehingga tidak memerlukan kunci Supabase. Pastikan `VITE_API_BASE_URL` di frontend mengarah ke backend (default `http://localhost:5000/api`).
 - ✅ **Path Setup Guide** - Panduan setup environment variables dan paths
 - ✅ **Example Code Generator** - Generate example code untuk testing
 
