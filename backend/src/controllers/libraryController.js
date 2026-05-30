@@ -10,11 +10,12 @@ export const getLibraries = async (req, res, next) => {
     // Try to get from database first
     if (isSupabaseConfigured()) {
       const result = await getAllLibrariesFromDB();
-      if (result.success) {
+      if (result.success && result.data.length > 0) {
         libraries = result.data;
       } else {
-        // Fallback to static data if database fails
-        console.warn('⚠️  Database query failed, using static data');
+        // Fallback to static data if database fails OR is empty
+        if (!result.success) console.warn('⚠️  Database query failed, using static data');
+        else console.warn('⚠️  Database is empty, using static data');
         libraries = getAllLibraries();
       }
     } else {
@@ -43,11 +44,9 @@ export const getLibraryDetails = async (req, res, next) => {
       const result = await getLibraryByIdFromDB(id);
       if (result.success) {
         library = result.data;
-      } else if (result.error === 'Library not found') {
-        throw new AppError(`Library with id '${id}' not found`, 404);
       } else {
-        // Fallback to static data if database fails
-        console.warn('⚠️  Database query failed, using static data');
+        // Fallback to static data (DB empty, not found, or error)
+        console.warn('⚠️  Database query failed or empty, using static data');
         library = getLibraryById(id);
       }
     } else {

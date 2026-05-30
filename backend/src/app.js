@@ -5,7 +5,6 @@ import morgan from 'morgan';
 import libraryRoutes from './routes/libraryRoutes.js';
 import commandRoutes from './routes/commandRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
-import { testDatabaseConnection } from './services/databaseService.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
@@ -28,19 +27,6 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development'
   });
-});
-
-// Database test endpoint
-app.get('/api/db/test', async (req, res) => {
-  try {
-    const result = await testDatabaseConnection();
-    if (result.success) {
-      return res.json({ success: true, message: result.message });
-    }
-    return res.status(500).json({ success: false, message: result.message });
-  } catch (error) {
-    return res.status(500).json({ success: false, message: error.message || 'Database test failed' });
-  }
 });
 
 // API Routes
