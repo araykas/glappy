@@ -2,12 +2,125 @@ import { useState, useRef, useEffect } from 'react';
 import { API_ENDPOINTS, apiRequest } from '../config/api';
 import { getSessionId } from '../config/session';
 
+const CodeBlock = ({ code }) => {
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  return (
+    <div className="my-2 bg-gray-900 text-gray-100 rounded-lg overflow-hidden">
+      <div className="flex justify-end p-2">
+        <button onClick={handleCopy} className="text-xs bg-gray-800 px-2 py-1 rounded text-gray-200">Copy</button>
+      </div>
+      <pre className="p-3 overflow-x-auto text-sm"><code>{code}</code></pre>
+    </div>
+  );
+};
+
+const MessageBubble = ({ msg, onSuggestionClick }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  const parseSegments = (text) => {
+    const parts = [];
+    let lastIndex = 0;
+    const re = /```([\s\S]*?)```/g;
+    let m;
+    while ((m = re.exec(text)) !== null) {
+      if (m.index > lastIndex) {
+        parts.push({ type: 'text', content: text.slice(lastIndex, m.index) });
+      }
+      parts.push({ type: 'code', content: m[1] });
+      lastIndex = re.lastIndex;
+    }
+    if (lastIndex < text.length) {
+      parts.push({ type: 'text', content: text.slice(lastIndex) });
+    }
+    return parts;
+  };
+
+  const renderContent = () => {
+    if (!msg.content) return null;
+    const parts = parseSegments(msg.content);
+
+    return parts.map((p, i) => {
+      if (p.type === 'code') return <CodeBlock key={i} code={p.content.trim()} />;
+      // text: split into paragraphs
+      const paragraphs = p.content.split(/\n\n+/).filter(Boolean);
+      return paragraphs.map((para, idx) => (
+        <p key={`${i}-${idx}`} className="text-sm whitespace-pre-line mb-2">{para}</p>
+      ));
+    });
+  };
+
+  const preview = (() => {
+    if (!msg.content) return '';
+    const firstPara = msg.content.split(/\n\n+/)[0] || msg.content;
+    return firstPara.length > 360 ? `${firstPara.slice(0, 360)}...` : firstPara;
+  })();
+
+  const isLong = (msg.content || '').length > 500 || (msg.content || '').includes('```');
+
+  if (msg.role === 'user') {
+    return (
+      <div className="flex flex-col items-end">
+        <div className="max-w-[80%] p-3 rounded-lg bg-sky-600 text-white">
+          <p className="text-sm whitespace-pre-line">{msg.content}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // assistant
+  return (
+    <div className="flex flex-col items-start max-w-full">
+      <div className={`max-w-[80%] p-3 rounded-lg ${msg.offTopic ? 'bg-amber-50 border border-amber-200 text-gray-800' : 'bg-white border border-gray-200 text-gray-800'}`}>
+        {msg.offTopic && <p className="text-xs text-amber-600 font-semibold mb-1">⚠️ Di luar topik</p>}
+
+        {!isLong && (
+          <div className="text-sm whitespace-pre-line">{msg.content}</div>
+        )}
+
+        {isLong && (
+          <div>
+            <div className="text-sm text-gray-800 mb-2">{expanded ? renderContent() : <p className="text-sm">{preview}</p>}</div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setExpanded(x => !x)} className="text-xs text-sky-600 underline">
+                {expanded ? 'Tampilkan lebih sedikit' : 'Tampilkan lebih'}
+              </button>
+              {msg.suggestions?.length > 0 && (
+                <span className="text-xs text-gray-500">• {msg.suggestions.length} saran tersedia</span>
+              )}
+            </div>
+            {expanded && renderContent()}
+          </div>
+        )}
+      </div>
+
+      {/* Suggestion chips */}
+      {msg.suggestions?.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2 max-w-[80%]">
+          {msg.suggestions.map((s, i) => (
+            <button key={i} onClick={() => onSuggestionClick(s)} className="text-xs bg-white border border-sky-200 text-sky-700 px-3 py-1 rounded-full hover:bg-sky-50 transition-colors">
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const AIAssistant = ({ deviceSpecs, library }) => {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
       content: 'Halo! Saya AI Assistant untuk membantu troubleshooting instalasi graphics library. Silakan tanyakan masalah yang Anda hadapi.',
       offTopic: false,
+      suggestions: [],
     }
   ]);
   const [input, setInput] = useState('');
@@ -38,11 +151,15 @@ const AIAssistant = ({ deviceSpecs, library }) => {
         })
       });
 
+      const aiContent = response?.data?.aiResponse ?? response?.aiResponse ?? 'Tidak ada respons dari AI.';
+      const suggestions = response?.data?.suggestions ?? response?.suggestions ?? [];
+      const offTopic = response?.data?.offTopic ?? response?.offTopic ?? false;
+
       const aiMessage = {
         role: 'assistant',
-        content: response.data.aiResponse,
-        suggestions: response.data.suggestions,
-        offTopic: response.data.offTopic || false,
+        content: aiContent,
+        suggestions,
+        offTopic,
       };
 
       setMessages(prev => [...prev, aiMessage]);
@@ -51,6 +168,7 @@ const AIAssistant = ({ deviceSpecs, library }) => {
         role: 'assistant',
         content: `❌ Error: ${error.message}\n\nPastikan backend server sudah running di http://localhost:5000`,
         offTopic: false,
+        suggestions: [],
       }]);
     } finally {
       setIsLoading(false);
@@ -84,37 +202,7 @@ const AIAssistant = ({ deviceSpecs, library }) => {
       <div className="bg-gray-50 rounded-lg p-4 h-96 overflow-y-auto mb-4 space-y-3">
         {messages.map((msg, index) => (
           <div key={index} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-            {/* Bubble */}
-            <div
-              className={`max-w-[80%] p-3 rounded-lg ${
-                msg.role === 'user'
-                  ? 'bg-sky-600 text-white'
-                  : msg.offTopic
-                  ? 'bg-amber-50 border border-amber-200 text-gray-800'
-                  : 'bg-white border border-gray-200 text-gray-800'
-              }`}
-            >
-              {/* Label off-topic */}
-              {msg.offTopic && (
-                <p className="text-xs text-amber-600 font-semibold mb-1">⚠️ Di luar topik</p>
-              )}
-              <p className="text-sm whitespace-pre-line">{msg.content}</p>
-            </div>
-
-            {/* Suggestion chips — hanya untuk pesan assistant */}
-            {msg.role === 'assistant' && msg.suggestions?.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2 max-w-[80%]">
-                {msg.suggestions.map((s, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleSuggestionClick(s)}
-                    className="text-xs bg-white border border-sky-200 text-sky-700 px-3 py-1 rounded-full hover:bg-sky-50 transition-colors"
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            )}
+            <MessageBubble msg={msg} onSuggestionClick={handleSuggestionClick} />
           </div>
         ))}
 
