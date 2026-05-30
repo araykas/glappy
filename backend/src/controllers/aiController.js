@@ -6,8 +6,8 @@ export const chatWithAI = async (req, res, next) => {
   try {
     const { message, context, sessionId } = req.body;
 
-    // Generate AI response (rule-based / dummy — ganti dengan AI API nanti)
-    const response = generateAIResponse(message, context);
+    // Generate AI response — Groq jika dikonfigurasi, fallback ke rule-based
+    const response = await generateAIResponse(message, context);
 
     // Hanya simpan ke DB kalau pertanyaan relevan (bukan off-topic)
     // Tidak ada gunanya nyimpen percakapan yang tidak relevan
