@@ -1,18 +1,18 @@
 // API Configuration untuk connect ke backend
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
 
 export const API_ENDPOINTS = {
   // Health check
   health: `${API_BASE_URL}/health`,
-  
+
   // Libraries
   libraries: `${API_BASE_URL}/libraries`,
   libraryDetails: (id) => `${API_BASE_URL}/libraries/${id}`,
-  
+
   // Commands
   generateCommands: `${API_BASE_URL}/commands/generate`,
-  
+
   // AI Assistant
   aiChat: `${API_BASE_URL}/ai/chat`,
 };
