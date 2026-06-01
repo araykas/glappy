@@ -111,11 +111,13 @@ export const generateAIResponseWithGroq = async (message, context = {}) => {
   const { deviceSpecs, library } = context;
 
   const userContext = [
-    deviceSpecs?.os    ? `OS: ${deviceSpecs.os}`    : null,
-    deviceSpecs?.cpu   ? `CPU: ${deviceSpecs.cpu}`   : null,
-    deviceSpecs?.gpu   ? `GPU: ${deviceSpecs.gpu}`   : null,
-    deviceSpecs?.ram   ? `RAM: ${deviceSpecs.ram}`   : null,
-    library?.name      ? `Library yang dipilih: ${library.name}` : null,
+    deviceSpecs?.os        ? `OS: ${deviceSpecs.os}${deviceSpecs.osVersion ? ` ${deviceSpecs.osVersion}` : ''}` : null,
+    deviceSpecs?.cpu       ? `CPU: ${deviceSpecs.cpu}`       : null,
+    deviceSpecs?.gpu       ? `GPU: ${deviceSpecs.gpu}`       : null,
+    deviceSpecs?.ram       ? `RAM: ${deviceSpecs.ram}`       : null,
+    deviceSpecs?.compiler  ? `Compiler: ${deviceSpecs.compiler}` : null,
+    deviceSpecs?.ide       ? `IDE: ${deviceSpecs.ide}`       : null,
+    library?.name          ? `Library yang dipilih: ${library.name}` : null,
   ].filter(Boolean).join('\n');
 
   const fullMessage = userContext
@@ -241,18 +243,28 @@ Bisa share error message lengkapnya untuk analisis lebih detail? 🔍`,
   }
 
   if (lower.includes('compile') || lower.includes('build') || lower.includes('kompilasi')) {
+    const compilerHint = deviceSpecs?.compiler
+      ? deviceSpecs.compiler.toLowerCase().includes('msvc') || deviceSpecs.compiler.toLowerCase().includes('visual studio')
+        ? 'MSVC (Visual Studio)'
+        : deviceSpecs.compiler.toLowerCase().includes('clang')
+          ? 'Clang'
+          : 'GCC/MinGW'
+      : 'GCC';
+
+    const compilerBin = compilerHint === 'Clang' ? 'clang++' : compilerHint === 'MSVC (Visual Studio)' ? 'cl.exe' : 'g++';
+
     return {
-      message: `Tips compile ${library?.name || 'project'} di ${deviceSpecs?.os || 'sistem Anda'}:
+      message: `Tips compile ${library?.name || 'project'} di ${deviceSpecs?.os || 'sistem Anda'} dengan **${compilerHint}**:
 
 1. **Pastikan include paths sudah benar** — flag \`-I\`
 2. **Link semua required libraries** — flag \`-L\` dan \`-l\`
 3. **Check compiler flags** — gunakan \`-std=c++11\`
 4. **Gunakan CMake** untuk manage compile secara otomatis
 
-💡 Contoh: \`g++ src/main.cpp -o app -lglfw -lGLEW -lGL\``,
+💡 Contoh dengan ${compilerHint}: \`${compilerBin} src/main.cpp -o app -lglfw -lGLEW -lGL\``,
       suggestions: [
         'Gunakan pkg-config untuk auto-detect paths',
-        'Coba compile dengan verbose flag: -v',
+        `Coba compile dengan verbose flag: ${compilerBin} -v`,
         'Check CMakeLists.txt configuration',
       ],
     };

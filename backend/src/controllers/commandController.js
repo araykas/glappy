@@ -45,10 +45,10 @@ export const generateCommands = async (req, res, next) => {
       );
     }
 
-    // Generate all data
+    // Generate all data — pass full deviceSpecs agar compiler, gpu, osVersion ikut dipakai
     const commands = generateInstallationCommands(libraryId, deviceSpecs);
-    const projectStructure = generateProjectStructure(libraryId);
-    const pathSetup = generatePathSetup(libraryId, deviceSpecs.os);
+    const projectStructure = generateProjectStructure(libraryId, deviceSpecs);
+    const pathSetup = generatePathSetup(libraryId, deviceSpecs);
     const exampleCode = generateExampleCode(libraryId);
     const cmakeFile = generateCMakeFile(libraryId);
 

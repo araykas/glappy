@@ -30,9 +30,11 @@ const CommandGenerator = ({ library, deviceSpecs }) => {
           sessionId: getSessionId(),
           deviceSpecs: {
             os: deviceSpecs.os,
+            osVersion: deviceSpecs.osVersion,
             cpu: deviceSpecs.cpu,
             gpu: deviceSpecs.gpu,
-            ram: deviceSpecs.ram
+            ram: deviceSpecs.ram,
+            compiler: deviceSpecs.compiler
           }
         })
       });

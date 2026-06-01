@@ -116,14 +116,23 @@ const DeviceSpecForm = ({ onSubmit }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Compiler
             </label>
-            <input
-              type="text"
+            <select
               name="compiler"
               value={specs.compiler}
               onChange={handleChange}
-              placeholder="e.g., GCC 11.2, MSVC 2022"
               className="input-field"
-            />
+            >
+              <option value="">Pilih Compiler</option>
+              <optgroup label="Windows">
+                <option value="gcc-mingw">GCC / MinGW (g++)</option>
+                <option value="msvc">MSVC (Visual Studio)</option>
+                <option value="clang-windows">Clang (LLVM Windows)</option>
+              </optgroup>
+              <optgroup label="Linux / macOS">
+                <option value="gcc">GCC (g++)</option>
+                <option value="clang">Clang</option>
+              </optgroup>
+            </select>
           </div>
 
           <div className="md:col-span-2">
