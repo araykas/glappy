@@ -28,11 +28,12 @@ function App() {
   const [deviceSpecs, setDeviceSpecs] = useState(() => load('hi_deviceSpecs'));
   const [selectedLibrary, setSelectedLibrary] = useState(() => load('hi_selectedLibrary'));
   const [activeTab, setActiveTab] = useState('setup');
-  const [generatedCommands, setGeneratedCommands] = useState([]);
+  const [generatedCommands, setGeneratedCommands] = useState(() => load('hi_generatedCommands', []));
 
   // Simpan ke localStorage setiap kali berubah
   useEffect(() => { save('hi_deviceSpecs', deviceSpecs); }, [deviceSpecs]);
   useEffect(() => { save('hi_selectedLibrary', selectedLibrary); }, [selectedLibrary]);
+  useEffect(() => { save('hi_generatedCommands', generatedCommands); }, [generatedCommands]);
 
   const handleSpecsSubmit = (specs) => {
     setDeviceSpecs(specs);

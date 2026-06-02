@@ -104,8 +104,11 @@ Tugas kamu:
 - Jelaskan cara setup environment variables dan PATH
 - Bantu konfigurasi CMake dan build system
 - Berikan solusi step-by-step yang praktis dan jelas
-- Jawab pertanyaan tentang cara alternatif instalasi (tanpa vcpkg, manual, dll)
+- Jawab pertanyaan tentang cara alternatif instalasi (tanpa vcpkg, tanpa package manager, cara manual, dll)
+- Jika user bertanya tentang alternatif dari tools yang ada di "Commands yang sudah ditampilkan", berikan alternatif konkret yang spesifik
 - Jawab dalam Bahasa Indonesia
+
+PENTING: Jika konteks menyebutkan commands yang sudah ditampilkan ke user (berisi vcpkg, apt, brew, dll), gunakan informasi itu untuk memberikan jawaban yang relevan dan spesifik — misalnya cara manual tanpa package manager tersebut.
 
 Format jawaban:
 - Gunakan numbering untuk langkah-langkah
@@ -130,7 +133,7 @@ export const generateAIResponseWithGroq = async (message, context = {}) => {
 
   // Sertakan ringkasan commands yang sudah di-generate agar AI tahu konteks penuh
   const commandsSummary = generatedCommands?.length
-    ? `\n\n[Commands yang sudah ditampilkan ke user]\n${generatedCommands.map(c => `- ${c.title}: ${c.command.split('\n')[0]}`).join('\n')}`
+    ? `\n\n[Commands instalasi yang sudah ditampilkan ke user — gunakan ini sebagai referensi jika user tanya tentang alternatif atau modifikasi dari commands ini]\n${generatedCommands.map(c => `- ${c.title}\n  Command: ${c.command.split('\n')[0]}${c.command.includes('\n') ? ' ...' : ''}`).join('\n')}`
     : '';
 
   const fullMessage = userContext
