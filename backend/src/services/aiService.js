@@ -38,6 +38,13 @@ const RELEVANT_KEYWORDS = [
   'include', 'header', '.h', 'dependency', 'dependencies',
   // General programming
   'code', 'kode', 'program', 'project', 'proyek', 'cpp', 'c++',
+  // Cara / how-to (penting untuk pertanyaan "cara X")
+  'cara', 'bagaimana', 'how', 'tanpa', 'without', 'alternatif', 'alternative',
+  'manual', 'langkah', 'step', 'tutorial', 'panduan', 'guide',
+  // Verifikasi / cek
+  'cek', 'check', 'verify', 'test', 'verifikasi',
+  // Tambahan tools
+  'nuget', 'conan', 'meson', 'ninja', 'make',
 ];
 
 const IRRELEVANT_KEYWORDS = [
@@ -97,6 +104,7 @@ Tugas kamu:
 - Jelaskan cara setup environment variables dan PATH
 - Bantu konfigurasi CMake dan build system
 - Berikan solusi step-by-step yang praktis dan jelas
+- Jawab pertanyaan tentang cara alternatif instalasi (tanpa vcpkg, manual, dll)
 - Jawab dalam Bahasa Indonesia
 
 Format jawaban:
@@ -108,7 +116,7 @@ Format jawaban:
 Jika pertanyaan di luar topik instalasi library/graphics programming, tolak dengan sopan dan arahkan ke topik yang relevan.`;
 
 export const generateAIResponseWithGroq = async (message, context = {}) => {
-  const { deviceSpecs, library } = context;
+  const { deviceSpecs, library, generatedCommands } = context;
 
   const userContext = [
     deviceSpecs?.os        ? `OS: ${deviceSpecs.os}${deviceSpecs.osVersion ? ` ${deviceSpecs.osVersion}` : ''}` : null,
@@ -120,8 +128,13 @@ export const generateAIResponseWithGroq = async (message, context = {}) => {
     library?.name          ? `Library yang dipilih: ${library.name}` : null,
   ].filter(Boolean).join('\n');
 
+  // Sertakan ringkasan commands yang sudah di-generate agar AI tahu konteks penuh
+  const commandsSummary = generatedCommands?.length
+    ? `\n\n[Commands yang sudah ditampilkan ke user]\n${generatedCommands.map(c => `- ${c.title}: ${c.command.split('\n')[0]}`).join('\n')}`
+    : '';
+
   const fullMessage = userContext
-    ? `[Konteks device user]\n${userContext}\n\n[Pertanyaan]\n${message}`
+    ? `[Konteks device user]\n${userContext}${commandsSummary}\n\n[Pertanyaan]\n${message}`
     : message;
 
   const completion = await groq.chat.completions.create({

@@ -187,18 +187,41 @@ const MessageBubble = ({ msg, onSuggestionClick }) => {
 };
 
 // Main Component
-const AIAssistant = ({ deviceSpecs, library }) => {
-  const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      content: 'Halo! Saya AI Assistant untuk membantu troubleshooting instalasi graphics library. Silakan tanyakan masalah yang Anda hadapi.',
-      offTopic: false,
-      suggestions: [],
+const AIAssistant = ({ deviceSpecs, library, generatedCommands }) => {
+  const CHAT_KEY = 'hi_chatHistory';
+
+  const loadChat = () => {
+    try {
+      const val = localStorage.getItem(CHAT_KEY);
+      return val ? JSON.parse(val) : [{
+        role: 'assistant',
+        content: 'Halo! Saya AI Assistant untuk membantu troubleshooting instalasi graphics library. Silakan tanyakan masalah yang Anda hadapi.',
+        offTopic: false,
+        suggestions: [],
+      }];
+    } catch {
+      return [{
+        role: 'assistant',
+        content: 'Halo! Saya AI Assistant untuk membantu troubleshooting instalasi graphics library. Silakan tanyakan masalah yang Anda hadapi.',
+        offTopic: false,
+        suggestions: [],
+      }];
     }
-  ]);
+  };
+
+  const [messages, setMessages] = useState(loadChat);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const bottomRef = useRef(null);
+
+  // Simpan chat ke localStorage setiap kali messages berubah
+  useEffect(() => {
+    try {
+      // Batasi simpan maks 50 pesan terakhir agar tidak overload storage
+      const toSave = messages.slice(-50);
+      localStorage.setItem(CHAT_KEY, JSON.stringify(toSave));
+    } catch {}
+  }, [messages]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -217,7 +240,7 @@ const AIAssistant = ({ deviceSpecs, library }) => {
         body: JSON.stringify({
           message: currentInput,
           sessionId: getSessionId(),
-          context: { deviceSpecs, library }
+          context: { deviceSpecs, library, generatedCommands }
         })
       });
       const aiContent = response?.data?.aiResponse ?? response?.aiResponse ?? 'Tidak ada respons dari AI.';
@@ -251,9 +274,27 @@ const AIAssistant = ({ deviceSpecs, library }) => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
         </svg>
         <h2 className="text-xl font-bold text-gray-800">🤖 AI Troubleshooting Assistant</h2>
-        <span className="ml-auto text-xs bg-sky-100 text-sky-700 px-2 py-1 rounded-full">
-          🎯 Fokus: Instalasi Library
-        </span>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-xs bg-sky-100 text-sky-700 px-2 py-1 rounded-full">
+            🎯 Fokus: Instalasi Library
+          </span>
+          <button
+            onClick={() => {
+              const init = [{
+                role: 'assistant',
+                content: 'Halo! Saya AI Assistant untuk membantu troubleshooting instalasi graphics library. Silakan tanyakan masalah yang Anda hadapi.',
+                offTopic: false,
+                suggestions: [],
+              }];
+              setMessages(init);
+              try { localStorage.removeItem('hi_chatHistory'); } catch {}
+            }}
+            className="text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded border border-gray-200 hover:border-red-300"
+            title="Hapus riwayat chat"
+          >
+            🗑️ Hapus Chat
+          </button>
+        </div>
       </div>
 
       {/* Chat area */}

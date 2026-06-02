@@ -13,8 +13,8 @@ const DEFAULT_LIBRARIES = [
   },
 ];
 
-const LibrarySelector = ({ onSelect }) => {
-  const [selectedLibrary, setSelectedLibrary] = useState(null);
+const LibrarySelector = ({ onSelect, savedLibrary }) => {
+  const [selectedLibrary, setSelectedLibrary] = useState(savedLibrary || null);
   const [libraries, setLibraries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState(null);

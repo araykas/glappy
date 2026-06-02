@@ -1,21 +1,34 @@
 import React, { useState } from 'react';
 
+const STORAGE_KEY = 'hi_formSpecs';
+
+const DEFAULT_SPECS = {
+  os: '',
+  osVersion: '',
+  cpu: '',
+  gpu: '',
+  ram: '',
+  compiler: '',
+  ide: ''
+};
+
+const loadSaved = () => {
+  try {
+    const val = localStorage.getItem(STORAGE_KEY);
+    return val ? { ...DEFAULT_SPECS, ...JSON.parse(val) } : DEFAULT_SPECS;
+  } catch {
+    return DEFAULT_SPECS;
+  }
+};
+
 const DeviceSpecForm = ({ onSubmit }) => {
-  const [specs, setSpecs] = useState({
-    os: '',
-    osVersion: '',
-    cpu: '',
-    gpu: '',
-    ram: '',
-    compiler: '',
-    ide: ''
-  });
+  const [specs, setSpecs] = useState(loadSaved);
 
   const handleChange = (e) => {
-    setSpecs({
-      ...specs,
-      [e.target.name]: e.target.value
-    });
+    const updated = { ...specs, [e.target.name]: e.target.value };
+    setSpecs(updated);
+    // Simpan draft ke localStorage saat user ngetik (tanpa perlu klik submit)
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)); } catch {}
   };
 
   const handleSubmit = (e) => {
