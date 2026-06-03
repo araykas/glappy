@@ -64,7 +64,7 @@ const CommandBlock = ({ cmd, index, copiedIndex, onCopy }) => {
 
 /* ── Code preview panel ── */
 const CodePreview = ({ code, title = 'main.cpp', copiedKey, onCopy }) => (
-  <div className="panel h-full flex flex-col overflow-hidden">
+  <div className="panel flex flex-col overflow-hidden">
     <div
       className="flex items-center justify-between px-4 py-2 flex-shrink-0"
       style={{ background: '#21262d', borderBottom: '1px solid #2d333b' }}
@@ -85,7 +85,7 @@ const CodePreview = ({ code, title = 'main.cpp', copiedKey, onCopy }) => (
         {copiedKey === 'code' ? '✓ copied' : '⎘ copy'}
       </button>
     </div>
-    <div className="flex-1 overflow-y-auto p-4 font-mono text-xs leading-relaxed" style={{ background: '#010409', color: '#c9d1d9' }}>
+    <div className="p-4 font-mono text-xs leading-relaxed overflow-x-auto" style={{ background: '#010409', color: '#c9d1d9' }}>
       {code.split('\n').map((line, i) => (
         <div key={i} className="code-line flex">
           <span className="select-none w-6 text-right flex-shrink-0 mr-4" style={{ color: '#484f58' }}>
@@ -222,13 +222,13 @@ const CommandGenerator = ({ library, deviceSpecs, onCommandsGenerated }) => {
   ];
 
   return (
-    <div className="flex flex-col gap-4 h-full animate-fadeInUp">
+    <div className="flex flex-col gap-4 animate-fadeInUp">
 
       {/* ── TOP: Split screen — Commands (left) + Code Preview (right) ── */}
-      <div className="flex gap-4 split-layout" style={{ minHeight: '420px' }}>
+      <div className="flex gap-4 split-layout">
 
         {/* LEFT: Installation commands */}
-        <div className="panel flex flex-col overflow-hidden split-left" style={{ flex: '1 1 55%' }}>
+        <div className="panel split-left" style={{ flex: '1 1 55%' }}>
           {/* Terminal chrome */}
           <div
             className="flex items-center justify-between px-4 py-2 flex-shrink-0"
@@ -262,7 +262,7 @@ const CommandGenerator = ({ library, deviceSpecs, onCommandsGenerated }) => {
           </div>
 
           {/* Content area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div className="p-4 space-y-3">
 
             {/* Commands tab */}
             {activeSection === 'commands' && (
@@ -346,7 +346,7 @@ const CommandGenerator = ({ library, deviceSpecs, onCommandsGenerated }) => {
         </div>
 
         {/* RIGHT: Code preview */}
-        <div className="split-right" style={{ flex: '1 1 45%', minHeight: '360px' }}>
+        <div className="split-right" style={{ flex: '1 1 45%' }}>
           <CodePreview
             code={exampleCode || '// No example code generated'}
             title="src/main.cpp"
