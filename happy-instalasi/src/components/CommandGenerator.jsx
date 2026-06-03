@@ -222,13 +222,29 @@ const CommandGenerator = ({ library, deviceSpecs, onCommandsGenerated }) => {
   ];
 
   return (
-    <div className="flex flex-col gap-4 animate-fadeInUp">
+    <div className="flex flex-col gap-3 animate-fadeInUp" style={{ flex: 1 }}>
 
-      {/* ── TOP: Split screen — Commands (left) + Code Preview (right) ── */}
-      <div className="flex gap-4 split-layout">
-
-        {/* LEFT: Installation commands */}
-        <div className="panel split-left" style={{ flex: '1 1 55%' }}>
+      {/* ── Split: Commands (left) + Code Preview (right) ── */}
+      <div
+        className="split-layout"
+        style={{
+          display: 'flex',
+          gap: '12px',
+          flex: 1,
+          minHeight: 0,   /* penting agar flex child bisa shrink */
+        }}
+      >
+        {/* LEFT: Installation commands — scrollable */}
+        <div
+          className="panel split-left"
+          style={{
+            flex: '1 1 55%',
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+            overflow: 'hidden',
+          }}
+        >
           {/* Terminal chrome */}
           <div
             className="flex items-center justify-between px-4 py-2 flex-shrink-0"
@@ -261,8 +277,8 @@ const CommandGenerator = ({ library, deviceSpecs, onCommandsGenerated }) => {
             </div>
           </div>
 
-          {/* Content area */}
-          <div className="p-4 space-y-3">
+          {/* Scrollable content */}
+          <div className="overflow-y-auto p-4 space-y-3" style={{ flex: 1 }}>
 
             {/* Commands tab */}
             {activeSection === 'commands' && (
@@ -345,20 +361,58 @@ const CommandGenerator = ({ library, deviceSpecs, onCommandsGenerated }) => {
           </div>
         </div>
 
-        {/* RIGHT: Code preview */}
-        <div className="split-right" style={{ flex: '1 1 45%' }}>
-          <CodePreview
-            code={exampleCode || '// No example code generated'}
-            title="src/main.cpp"
-            copiedKey={copiedIndex}
-            onCopy={copyToClipboard}
-          />
+        {/* RIGHT: Code preview — scrollable, same height as left */}
+        <div
+          className="split-right panel"
+          style={{
+            flex: '1 1 45%',
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+            overflow: 'hidden',
+          }}
+        >
+          {/* Header */}
+          <div
+            className="flex items-center justify-between px-4 py-2 flex-shrink-0"
+            style={{ background: '#21262d', borderBottom: '1px solid #2d333b' }}
+          >
+            <div className="flex items-center gap-3">
+              <TerminalDots />
+              <span className="font-mono text-xs" style={{ color: '#8b949e' }}>src/main.cpp</span>
+            </div>
+            <button
+              onClick={() => copyToClipboard(exampleCode || '', 'code')}
+              className="font-mono text-xs px-2 py-1 rounded transition-all duration-200"
+              style={
+                copiedIndex === 'code'
+                  ? { background: '#1f3a2b', border: '1px solid #238636', color: '#4af626' }
+                  : { background: '#0d1117', border: '1px solid #373e47', color: '#8b949e' }
+              }
+            >
+              {copiedIndex === 'code' ? '✓ copied' : '⎘ copy'}
+            </button>
+          </div>
+          {/* Scrollable code */}
+          <div
+            className="overflow-y-auto overflow-x-auto p-4 font-mono text-xs leading-relaxed"
+            style={{ flex: 1, background: '#010409', color: '#c9d1d9' }}
+          >
+            {(exampleCode || '// No example code generated').split('\n').map((line, i) => (
+              <div key={i} className="code-line flex">
+                <span className="select-none w-6 text-right flex-shrink-0 mr-4" style={{ color: '#484f58' }}>
+                  {i + 1}
+                </span>
+                <span>{line || '\u00A0'}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* ── BOTTOM: CMakeLists.txt (Windows only) ── */}
+      {/* CMakeLists.txt — Windows only, collapsible height */}
       {deviceSpecs.os === 'windows' && (
-        <div className="panel overflow-hidden">
+        <div className="panel flex-shrink-0 overflow-hidden">
           <div
             className="flex items-center justify-between px-4 py-2"
             style={{ background: '#21262d', borderBottom: '1px solid #2d333b' }}
@@ -366,7 +420,7 @@ const CommandGenerator = ({ library, deviceSpecs, onCommandsGenerated }) => {
             <div className="flex items-center gap-3">
               <TerminalDots />
               <span className="font-mono text-xs" style={{ color: '#bc8cff' }}>CMakeLists.txt</span>
-              <span className="font-mono text-xs" style={{ color: '#484f58' }}>// recommended build system</span>
+              <span className="font-mono text-xs" style={{ color: '#484f58' }}>// recommended</span>
             </div>
             <button
               onClick={() => copyToClipboard(CMAKE_CONTENT, 'cmake')}
@@ -382,9 +436,9 @@ const CommandGenerator = ({ library, deviceSpecs, onCommandsGenerated }) => {
           </div>
           <pre
             className="p-4 font-mono text-xs overflow-x-auto leading-relaxed"
-            style={{ background: '#010409', color: '#c9d1d9' }}
+            style={{ background: '#010409', color: '#c9d1d9', maxHeight: '180px', overflowY: 'auto' }}
           >
-{CMAKE_CONTENT}
+            {CMAKE_CONTENT}
           </pre>
         </div>
       )}
