@@ -99,9 +99,14 @@ Scroll ke bawah ke bagian **"Environment Variables"**, tambahkan satu per satu:
 
 Buka browser, akses:
 ```
-https://happy-instalasi-backend.vercel.app/health
+https://happy-instalasi-backend.vercel.app/api/health
 ```
-Kalau muncul JSON response, backend berhasil. ✅
+Kalau muncul JSON seperti ini, backend berhasil ✅:
+```json
+{"status":"OK","message":"Happy Instalasi Backend is running","timestamp":"...","environment":"production"}
+```
+
+> ⚠️ Jangan lupa `/api/` sebelum `health` — endpoint-nya ada di `/api/health`, bukan `/health`.
 
 ---
 

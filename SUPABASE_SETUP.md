@@ -33,7 +33,7 @@
 Buka `backend/.env`, ganti placeholder:
 
 ```env
-SUPABASE_URL=https://kvaaofpldyyzdxlhsusc.supabase.co
+SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
 SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 

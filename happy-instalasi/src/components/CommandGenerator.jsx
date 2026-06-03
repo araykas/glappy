@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { API_ENDPOINTS, apiRequest } from '../config/api';
 import { getSessionId } from '../config/session';
 
-const CommandGenerator = ({ library, deviceSpecs }) => {
+const CommandGenerator = ({ library, deviceSpecs, onCommandsGenerated }) => {
   const [commands, setCommands] = useState([]);
   const [copiedIndex, setCopiedIndex] = useState(null);
   const [projectStructure, setProjectStructure] = useState('');
@@ -45,6 +45,11 @@ const CommandGenerator = ({ library, deviceSpecs }) => {
       setPathSetup(response.data.pathSetup);
       setExampleCode(response.data.exampleCode);
       setCmakeFile(response.data.cmakeFile);
+
+      // Kirim commands ke parent (App.jsx) agar AI Assistant bisa pakai sebagai context
+      if (onCommandsGenerated) {
+        onCommandsGenerated(response.data.commands);
+      }
     } catch (err) {
       setError(err.message || 'Failed to generate commands');
       console.error('Error generating commands:', err);
