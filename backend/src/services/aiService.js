@@ -114,6 +114,7 @@ PENTING:
 - Pertanyaan seperti "bisa instalasi OpenGL tanpa vcpkg?", "cara manual install GLFW", "alternatif selain vcpkg" adalah TOPIK VALID — jawab dengan lengkap dan spesifik.
 - Jika konteks menyebutkan commands yang sudah ditampilkan ke user (berisi vcpkg, apt, brew, dll), gunakan informasi itu untuk memberikan jawaban relevan — misalnya cara manual tanpa package manager tersebut.
 - JANGAN tolak pertanyaan yang masih berkaitan dengan instalasi, setup, atau konfigurasi graphics library meskipun menggunakan kata "tanpa", "alternatif", "selain", "manual", atau "without".
+- SANGAT PENTING: Selalu perhatikan OS user dari konteks. Jika OS adalah Windows, HANYA berikan instruksi Windows — jangan sertakan instruksi Linux/macOS kecuali user secara eksplisit meminta. Begitu juga sebaliknya.
 
 Format jawaban:
 - Gunakan numbering untuk langkah-langkah
@@ -236,49 +237,99 @@ const getRuleBasedResponse = (message, context = {}) => {
   // Deteksi pertanyaan "tanpa vcpkg" / "alternatif package manager"
   if ((lower.includes('tanpa') || lower.includes('without') || lower.includes('alternatif') || lower.includes('selain')) &&
       (lower.includes('vcpkg') || lower.includes('apt') || lower.includes('brew') || lower.includes('package'))) {
-    return {
-      message: `Ya, bisa banget install ${library?.name || 'library graphics'} **tanpa package manager**! 💪
+    const os = deviceSpecs?.os?.toLowerCase() || '';
+    const isWindows = os.includes('windows') || os === '';
+    const isLinux = os.includes('linux') || os.includes('ubuntu') || os.includes('debian');
+    const isMac = os.includes('mac');
+    const compiler = deviceSpecs?.compiler?.toLowerCase() || '';
+    const isMSVC = compiler.includes('msvc') || compiler.includes('visual studio');
 
-**Cara manual install OpenGL/GLFW/GLEW (Windows):**
+    let manualSteps = '';
+
+    if (isWindows) {
+      if (isMSVC) {
+        manualSteps = `**Cara manual install OpenGL/GLFW/GLEW di Windows (Visual Studio):**
 
 1. **Download library dari official site**
-   - GLFW: https://www.glfw.org/download.html
-   - GLEW: http://glew.sourceforge.net/
-   - Extract ke folder (contoh: \`C:/libs/glfw\`, \`C:/libs/glew\`)
+   - GLFW: https://www.glfw.org/download.html → pilih **Windows pre-compiled binaries**
+   - GLEW: http://glew.sourceforge.net/ → pilih **Windows 32/64-bit**
+   - Extract ke folder, contoh: \`C:\\libs\\glfw\`, \`C:\\libs\\glew\`
 
-2. **Setup compiler include & lib paths**
-   ${deviceSpecs?.compiler?.toLowerCase().includes('msvc') || deviceSpecs?.compiler?.toLowerCase().includes('visual studio') ? `
-   Visual Studio:
-   - Project Properties → C/C++ → General → Additional Include Directories
-     Tambahkan: \`C:/libs/glfw/include;C:/libs/glew/include\`
-   - Linker → General → Additional Library Directories
-     Tambahkan: \`C:/libs/glfw/lib-vc2022;C:/libs/glew/lib/Release/x64\`
-   - Linker → Input → Additional Dependencies
-     Tambahkan: \`glfw3.lib;glew32.lib;opengl32.lib\`` : `
-   GCC/MinGW:
-   - Compile dengan flag:
-     \`g++ main.cpp -I C:/libs/glfw/include -I C:/libs/glew/include -L C:/libs/glfw/lib-mingw-w64 -L C:/libs/glew/lib/Release/x64 -lglfw3 -lglew32 -lopengl32 -lgdi32\``}
+2. **Setup di Visual Studio**
+   - Project Properties → C/C++ → General → **Additional Include Directories**
+     Tambahkan: \`C:\\libs\\glfw\\include;C:\\libs\\glew\\include\`
+   - Linker → General → **Additional Library Directories**
+     Tambahkan: \`C:\\libs\\glfw\\lib-vc2022;C:\\libs\\glew\\lib\\Release\\x64\`
+   - Linker → Input → **Additional Dependencies**
+     Tambahkan: \`glfw3.lib;glew32.lib;opengl32.lib\`
 
-3. **Copy DLL files ke project directory**
-   - Copy \`glew32.dll\` dari \`C:/libs/glew/bin/Release/x64\` ke folder executable Anda
+3. **Copy DLL ke folder project**
+   - Copy \`glew32.dll\` dari \`C:\\libs\\glew\\bin\\Release\\x64\\` ke folder executable
 
-4. **Verify dengan simple program**
-   - Compile contoh code dari GLFW documentation
+4. **Build & run project**`;
+      } else {
+        manualSteps = `**Cara manual install OpenGL/GLFW/GLEW di Windows (MinGW/GCC):**
 
-**Linux/macOS manual:**
-- Download source, extract, lalu:
-  \`\`\`bash
-  cd glfw-3.x.x
-  cmake .
-  make
-  sudo make install
-  \`\`\`
+1. **Download library dari official site**
+   - GLFW: https://www.glfw.org/download.html → pilih **Windows pre-compiled binaries**
+   - GLEW: http://glew.sourceforge.net/ → pilih **Windows 32/64-bit**
+   - Extract ke folder, contoh: \`C:\\libs\\glfw\`, \`C:\\libs\\glew\`
 
-💡 **Kalau ribet**, vcpkg/apt/brew tetap lebih praktis karena otomatis handle semua ini 😊`,
+2. **Compile dengan flag manual**
+   \`\`\`
+g++ main.cpp -I C:/libs/glfw/include -I C:/libs/glew/include -L C:/libs/glfw/lib-mingw-w64 -L C:/libs/glew/lib/Release/x64 -lglfw3 -lglew32 -lopengl32 -lgdi32 -o app
+   \`\`\`
+
+3. **Copy DLL ke folder project**
+   - Copy \`glew32.dll\` dari \`C:\\libs\\glew\\bin\\Release\\x64\\` ke folder executable
+
+4. **Jalankan program**
+   \`\`\`
+app.exe
+   \`\`\``;
+      }
+    } else if (isLinux) {
+      manualSteps = `**Cara manual install OpenGL/GLFW/GLEW di Linux:**
+
+1. **Install via package manager distro**
+   \`\`\`bash
+sudo apt install libglfw3-dev libglew-dev libgl1-mesa-dev
+   \`\`\`
+
+2. **Atau build dari source**
+   \`\`\`bash
+git clone https://github.com/glfw/glfw.git
+cd glfw && cmake . && make && sudo make install
+   \`\`\`
+
+3. **Compile project**
+   \`\`\`bash
+g++ main.cpp -lglfw -lGLEW -lGL -o app
+   \`\`\``;
+    } else if (isMac) {
+      manualSteps = `**Cara manual install OpenGL/GLFW/GLEW di macOS:**
+
+1. **Install via Homebrew (tanpa vcpkg)**
+   \`\`\`bash
+brew install glfw glew
+   \`\`\`
+
+2. **Compile project**
+   \`\`\`bash
+g++ main.cpp -lglfw -lGLEW -framework OpenGL -o app
+   \`\`\``;
+    }
+
+    return {
+      message: `Ya, bisa banget install **tanpa vcpkg**! 💪
+
+${manualSteps}
+
+💡 **Tips:** Setelah setup, gunakan CMake agar path otomatis terdeteksi tanpa perlu set manual tiap project baru.`,
       suggestions: [
         'Bagaimana setup PATH untuk DLL?',
         'Error "cannot open file glfw3.lib"',
-        'Cara compile tanpa CMake',
+        'Cara compile dengan CMake tanpa vcpkg',
       ],
     };
   }
