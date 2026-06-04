@@ -161,7 +161,7 @@ const MessageBubble = ({ msg, onSuggestionClick }) => {
 const CHAT_KEY = 'hi_chatHistory';
 const INIT_MSG = {
   role: 'assistant',
-  content: 'AI Montir online. Paste error log atau describe masalah kompilasi kamu.',
+  content: 'Glappy Assist online. Paste error log atau describe masalah kompilasi kamu.',
   offTopic: false,
   suggestions: ['Cara install OpenGL?', 'Error saat compile', 'Setup PATH variables', 'CMake tidak find library'],
 };
@@ -232,10 +232,10 @@ const AIAssistant = ({ deviceSpecs, library, generatedCommands }) => {
       <button
         onClick={() => setOpen(o => !o)}
         className="fab-ai"
-        title="AI Montir Log — Konsultasi error kompilasi"
+        title="Glappy Assist Log — Konsultasi error kompilasi"
       >
         <span className="text-base">🔧</span>
-        <span className="hidden sm:inline">AI Montir</span>
+        <span className="hidden sm:inline">Glappy Assist</span>
         {open
           ? <span style={{ color: '#8b949e' }}>✕</span>
           : <span style={{ color: '#484f58', fontSize: '10px' }}>↗</span>
@@ -252,7 +252,7 @@ const AIAssistant = ({ deviceSpecs, library, generatedCommands }) => {
           >
             <div className="flex items-center gap-2">
               <span className="status-dot green glow-pulse" />
-              <span className="font-mono text-sm font-semibold" style={{ color: '#4af626' }}>AI Montir Log</span>
+              <span className="font-mono text-sm font-semibold" style={{ color: '#4af626' }}>Glappy Assist Log</span>
               <span className="font-mono text-xs" style={{ color: '#484f58' }}>// troubleshooter</span>
             </div>
             <div className="flex items-center gap-2">

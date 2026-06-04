@@ -147,7 +147,7 @@ function App() {
 
           {/* Footer hint */}
           <div className="px-4 py-3 font-mono text-xs" style={{ borderTop: '1px solid #21262d', color: '#373e47' }}>
-            <div>AI Montir available</div>
+            <div>Glappy Assist available</div>
             <div style={{ color: '#4af626' }}>↘ bottom-right</div>
           </div>
         </aside>
@@ -195,7 +195,7 @@ function App() {
                     ['Step 1', 'Isi spesifikasi device di bawah'],
                     ['Step 2', 'Pilih graphics library target'],
                     ['Step 3', null],
-                    ['Step 4', 'Gunakan 🔧 AI Montir (pojok kanan bawah) jika ada error'],
+                    ['Step 4', 'Gunakan 🔧 Glappy Assist (pojok kanan bawah) jika ada error'],
                   ].map(([step, text], i) => (
                     <div key={i} style={{ color: '#8b949e' }}>
                       <span style={{ color: '#58a6ff' }}>{step}:</span>{' '}
@@ -252,7 +252,7 @@ function App() {
                 <div className="rounded p-3 font-mono text-xs flex-shrink-0"
                   style={{ background: '#2d2007', border: '1px solid #9e6a03', color: '#e3b341' }}>
                   ⚠ Jalankan command sesuai urutan · Butuh akses admin/sudo · Backup project dulu ·{' '}
-                  Gunakan <span style={{ color: '#4af626' }}>🔧 AI Montir</span> jika ada error
+                  Gunakan <span style={{ color: '#4af626' }}>🔧 Glappy Assist</span> jika ada error
                 </div>
               )}
             </div>
