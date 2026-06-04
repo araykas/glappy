@@ -37,7 +37,7 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
-    message: 'Happy Instalasi Backend is running',
+    message: 'Glappy Backend is running',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development'
   });

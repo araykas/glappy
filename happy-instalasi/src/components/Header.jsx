@@ -20,10 +20,10 @@ const Header = ({ deviceSpecs, selectedLibrary }) => {
         </div>
         <div>
           <div className="font-mono font-bold text-sm md:text-base leading-none" style={{ color: '#4af626' }}>
-            Happy Instalasi
+            Glappy
           </div>
           <div className="font-mono text-xs mt-0.5 hidden sm:block" style={{ color: '#8b949e' }}>
-            OpenGL Configuration & AI Troubleshooter
+            AI-Powered Graphics Environment & Compiler Generator
           </div>
         </div>
       </div>

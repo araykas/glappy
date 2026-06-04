@@ -1,7 +1,7 @@
 {
-  "name": "happy-instalasi-backend",
+  "name": "glappy-backend",
   "version": "1.0.0",
-  "description": "Backend API for Happy Instalasi - AI-Powered Installation Assistant",
+  "description": "Backend API for Glappy - AI-Powered Graphics Environment & Compiler Generator",
   "main": "server.js",
   "type": "module",
   "scripts": {

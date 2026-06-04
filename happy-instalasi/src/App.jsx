@@ -272,7 +272,7 @@ function App() {
         className="flex-shrink-0 py-2 px-6 font-mono text-xs text-center"
         style={{ background: '#161b22', borderTop: '1px solid #21262d', color: '#373e47' }}
       >
-        Happy Instalasi — AI-Powered Installation Assistant · Made with ❤ for easier library installations
+        Glappy — AI-Powered Graphics Environment & Compiler Generator · Made with ❤ for easier library installations
       </footer>
     </div>
   );
