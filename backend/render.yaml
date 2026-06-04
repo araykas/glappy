@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: happy-instalasi-backend
+    name: glappy-dev-backend
     runtime: node
     rootDir: backend
     buildCommand: npm install

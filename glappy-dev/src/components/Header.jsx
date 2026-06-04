@@ -58,7 +58,6 @@ const Header = ({ deviceSpecs, selectedLibrary }) => {
       <div className="flex items-center gap-3">
         <div className="hidden sm:flex items-center gap-1.5">
           <span className="status-dot green" />
-          <span className="font-mono text-xs" style={{ color: '#8b949e' }}>SYS: 99.99%</span>
         </div>
         <span
           className="font-mono text-xs px-2 py-1 rounded"

@@ -4,7 +4,7 @@
 
 Glappy membantu developer C++ men-setup environment OpenGL (dan library grafis lainnya) dengan cepat — dari generate installation commands yang spesifik untuk hardware kamu, sampai troubleshooting error compile via AI.
 
-🌐 **Live:** [https://happy-instalasi.vercel.app](https://happy-instalasi.vercel.app)
+🌐 **Live:** [https://glappy-dev.vercel.app](https://glappy-dev.vercel.app)
 
 ---
 
@@ -12,7 +12,7 @@ Glappy membantu developer C++ men-setup environment OpenGL (dan library grafis l
 
 - **Installation Command Generator** — Generate script instalasi yang disesuaikan dengan OS, compiler, dan GPU user secara otomatis
 - **Split-Screen IDE Layout** — Panel command (kiri) + code preview `main.cpp` (kanan) dalam satu layar
-- **AI Montir** — Floating AI troubleshooter untuk analisis error compile, linking error, dan konfigurasi CMake
+- **Glappy Assist** — Floating AI troubleshooter untuk analisis error compile, linking error, dan konfigurasi CMake
 - **Dark Terminal UI** — Cyberpunk/IDE aesthetic berbasis GitHub Dark
 - **Responsive** — Desktop sidebar layout, mobile tab navigation
 
@@ -34,7 +34,7 @@ Glappy membantu developer C++ men-setup environment OpenGL (dan library grafis l
 
 ```
 glappy/
-├── happy-instalasi/        # Frontend (React + Vite)
+├── glappy-dev/        # Frontend (React + Vite)
 │   ├── src/
 │   │   ├── components/     # Header, CommandGenerator, AIAssistant, dll
 │   │   ├── config/         # API config, session management
@@ -56,12 +56,12 @@ glappy/
 
 ## Cara Pakai
 
-1. Buka [https://happy-instalasi.vercel.app](https://happy-instalasi.vercel.app)
+1. Buka [https://glappy-dev.vercel.app](https://glappy-dev.vercel.app)
 2. Di tab **Setup** — isi spesifikasi device (OS, CPU, GPU, compiler)
 3. Pilih library target (OpenGL)
 4. Buka tab **Commands** — script instalasi langsung ter-generate sesuai hardware kamu
 5. Copy dan jalankan command di terminal lokal kamu
-6. Kalau ada error, klik **🔧 AI Montir** di pojok kanan bawah — paste error log untuk dapat solusi
+6. Kalau ada error, klik **🔧 Glappy Assist** di pojok kanan bawah — paste error log untuk dapat solusi
 
 ---
 
@@ -73,7 +73,7 @@ glappy/
 
 ### Frontend
 ```bash
-cd happy-instalasi
+cd glappy-dev
 npm install
 npm run dev        # http://localhost:5173
 ```
