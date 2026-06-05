@@ -126,6 +126,11 @@ npm run dev        # http://localhost:5000
 
 ---
 
+## Demo Penggunaan
+
+https://drive.google.com/drive/folders/1Pssuqa0aO_ztO3wbgu23WcywO4GoWFWI?usp=drive_link
+---
+
 ## License
 
 GNU General Public License v3.0 — see [LICENSE](./LICENSE) for details.
