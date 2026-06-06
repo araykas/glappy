@@ -29,12 +29,23 @@ const DeviceSpecForm = ({ onSubmit }) => {
     if (!trimmed) return 'Field ini wajib diisi.';
 
     if (name === 'osVersion') {
-      if (!/^[A-Za-z0-9 .()+\-_,]+$/.test(trimmed)) return 'OS Version hanya boleh berisi huruf, angka, spasi, dan tanda umum.';
+      if (trimmed.length < 2) return 'OS Version minimal 2 karakter.';
+      if (!/^[A-Za-z0-9 .()+\-_,]{2,40}$/.test(trimmed)) return 'OS Version hanya boleh berisi huruf, angka, spasi, dan tanda umum.';
       return null;
     }
 
     if (name === 'cpu' || name === 'gpu') {
-      if (!/^[A-Za-z0-9 .()+\-_/]+$/.test(trimmed)) return 'Gunakan teks valid untuk CPU/GPU, tanpa simbol aneh.';
+      if (trimmed.length < 3) return 'CPU/GPU harus minimal 3 karakter.';
+      if (!/^[A-Za-z0-9 .()+\-_/]{3,40}$/.test(trimmed)) return 'Gunakan teks valid untuk CPU/GPU, tanpa simbol aneh.';
+
+      const cpuVendorPattern = /\b(?:intel|amd|apple|ryzen|core|xeon|pentium|celeron|athlon|m1|m2)\b/i;
+      const gpuVendorPattern = /\b(?:nvidia|amd|intel|geforce|radeon|rtx|gtx|iris|xe|mx|rx|quadro|titan)\b/i;
+      if (name === 'cpu' && !cpuVendorPattern.test(trimmed)) {
+        return 'CPU harus menyertakan vendor valid seperti Intel, AMD, atau Apple.';
+      }
+      if (name === 'gpu' && !gpuVendorPattern.test(trimmed)) {
+        return 'GPU harus menyertakan vendor valid seperti NVIDIA, AMD, atau Intel.';
+      }
       return null;
     }
 
@@ -128,8 +139,9 @@ const DeviceSpecForm = ({ onSubmit }) => {
               placeholder="e.g. Windows 11, Ubuntu 22.04"
               className={`input-field ${errors.osVersion ? 'border-[#f85149] focus:border-[#f85149]' : ''}`}
               required
+              minLength={2}
               maxLength={40}
-              pattern="^[A-Za-z0-9 .()+\-_,]+$"
+              pattern="^[A-Za-z0-9 .()+\-_,]{2,40}$"
               title="Contoh: Windows 11 atau Ubuntu 22.04"
             />
             {errors.osVersion && <p className="text-[11px] text-[#f85149] mt-1">{errors.osVersion}</p>}
@@ -143,8 +155,9 @@ const DeviceSpecForm = ({ onSubmit }) => {
               placeholder="e.g. Intel i7-12700K"
               className={`input-field ${errors.cpu ? 'border-[#f85149] focus:border-[#f85149]' : ''}`}
               required
+              minLength={3}
               maxLength={40}
-              pattern="^[A-Za-z0-9 .()+\-_/]+$"
+              pattern="^[A-Za-z0-9 .()+\-_/]{3,40}$"
               title="Contoh: Intel i7-12700K atau AMD Ryzen 5 5600X"
             />
             {errors.cpu && <p className="text-[11px] text-[#f85149] mt-1">{errors.cpu}</p>}
@@ -158,8 +171,9 @@ const DeviceSpecForm = ({ onSubmit }) => {
               placeholder="e.g. NVIDIA RTX 3060"
               className={`input-field ${errors.gpu ? 'border-[#f85149] focus:border-[#f85149]' : ''}`}
               required
+              minLength={3}
               maxLength={40}
-              pattern="^[A-Za-z0-9 .()+\-_/]+$"
+              pattern="^[A-Za-z0-9 .()+\-_/]{3,40}$"
               title="Contoh: NVIDIA RTX 3060 atau Intel Iris Xe"
             />
             {errors.gpu && <p className="text-[11px] text-[#f85149] mt-1">{errors.gpu}</p>}
@@ -174,7 +188,7 @@ const DeviceSpecForm = ({ onSubmit }) => {
               className={`input-field ${errors.ram ? 'border-[#f85149] focus:border-[#f85149]' : ''}`}
               required
               maxLength={10}
-              pattern="^[1-9]\d*\s*GB$"
+              pattern="^[1-9]\d*\s*[Gg][Bb]$"
               title="Contoh: 8GB atau 16 GB"
             />
             {errors.ram && <p className="text-[11px] text-[#f85149] mt-1">{errors.ram}</p>}
