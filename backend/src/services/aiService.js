@@ -95,6 +95,27 @@ Silakan tanyakan masalah yang berkaitan dengan topik di atas! 😊`,
   offTopic: true,
 });
 
+const buildConversationPreferences = (chatHistory = []) => {
+  const content = Array.isArray(chatHistory)
+    ? chatHistory.map((entry) => entry.content || '').join(' ').toLowerCase()
+    : '';
+
+  const prefs = [];
+  if (content.includes('chocolatey')) prefs.push('Chocolatey');
+  if (content.includes('vcpkg')) prefs.push('vcpkg');
+  if (content.includes('apt')) prefs.push('apt');
+  if (content.includes('brew')) prefs.push('brew');
+  if (/jangan (pakai )?vcpkg|bukan vcpkg|tidak pakai vcpkg|tanpa vcpkg/.test(content)) {
+    prefs.push('hindari vcpkg');
+  }
+  if (/pakai chocolatey|gunakan chocolatey|chocolatey saja/.test(content)) {
+    if (!prefs.includes('Chocolatey')) prefs.push('Chocolatey');
+  }
+  if (prefs.length === 0) return null;
+
+  return `Preferensi percakapan sebelumnya: ${prefs.join(', ')}.`;
+};
+
 // ============================================
 // GROQ AI RESPONSE
 // ============================================
@@ -152,10 +173,16 @@ export const generateAIResponseWithGroq = async (message, context = {}) => {
     ? `[Konteks device user]\n${userContext}${commandsSummary}\n\n[Pertanyaan]\n${message}`
     : message;
 
+  const preferenceSummary = buildConversationPreferences(chatHistory);
+  const preferenceMessage = preferenceSummary
+    ? [{ role: 'system', content: preferenceSummary }]
+    : [];
+
   const completion = await groq.chat.completions.create({
     model: 'llama-3.3-70b-versatile',
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
+      ...preferenceMessage,
       ...historyMessages,
       { role: 'user', content: fullMessage },
     ],

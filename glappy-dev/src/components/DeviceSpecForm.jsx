@@ -22,17 +22,66 @@ const Label = ({ children, required }) => (
 const DeviceSpecForm = ({ onSubmit }) => {
   const [specs, setSpecs] = useState(loadSaved);
   const [saved, setSaved] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  const validateField = (name, value) => {
+    const trimmed = value.trim();
+    if (!trimmed) return 'Field ini wajib diisi.';
+
+    if (name === 'osVersion') {
+      if (!/^[A-Za-z0-9 .()+\-_,]+$/.test(trimmed)) return 'OS Version hanya boleh berisi huruf, angka, spasi, dan tanda umum.';
+      return null;
+    }
+
+    if (name === 'cpu' || name === 'gpu') {
+      if (!/^[A-Za-z0-9 .()+\-_/]+$/.test(trimmed)) return 'Gunakan teks valid untuk CPU/GPU, tanpa simbol aneh.';
+      return null;
+    }
+
+    if (name === 'ram') {
+      if (!/^[1-9]\d*\s*GB$/i.test(trimmed)) return 'RAM harus dalam format seperti 8GB atau 16 GB.';
+      return null;
+    }
+
+    return null;
+  };
+
+  const validateSpecs = (values) => {
+    const nextErrors = {};
+    if (!values.os) nextErrors.os = 'Pilih Operating System.';
+    ['osVersion', 'cpu', 'gpu', 'ram'].forEach((field) => {
+      const error = validateField(field, values[field]);
+      if (error) nextErrors[field] = error;
+    });
+    return nextErrors;
+  };
 
   const handleChange = (e) => {
     const updated = { ...specs, [e.target.name]: e.target.value };
     setSpecs(updated);
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)); } catch {}
+    setErrors((prev) => ({ ...prev, [e.target.name]: null }));
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)); } catch { }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(specs);
+    const nextErrors = validateSpecs(specs);
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      return;
+    }
+
+    onSubmit({
+      os: specs.os,
+      osVersion: specs.osVersion.trim(),
+      cpu: specs.cpu.trim(),
+      gpu: specs.gpu.trim(),
+      ram: specs.ram.trim(),
+      compiler: specs.compiler,
+      ide: specs.ide.trim(),
+    });
     setSaved(true);
+    setErrors({});
     setTimeout(() => setSaved(false), 2000);
   };
 
@@ -58,12 +107,17 @@ const DeviceSpecForm = ({ onSubmit }) => {
           {/* OS */}
           <div>
             <Label required>Operating System</Label>
-            <select name="os" value={specs.os} onChange={handleChange} className="input-field" required>
+            <select
+              name="os" value={specs.os} onChange={handleChange}
+              className={`input-field ${errors.os ? 'border-[#f85149] focus:border-[#f85149]' : ''}`}
+              required
+            >
               <option value="">-- Select OS --</option>
               <option value="windows">Windows</option>
               <option value="linux">Linux</option>
               <option value="macos">macOS</option>
             </select>
+            {errors.os && <p className="text-[11px] text-[#f85149] mt-1">{errors.os}</p>}
           </div>
 
           {/* OS Version */}
@@ -72,8 +126,13 @@ const DeviceSpecForm = ({ onSubmit }) => {
             <input
               type="text" name="osVersion" value={specs.osVersion} onChange={handleChange}
               placeholder="e.g. Windows 11, Ubuntu 22.04"
-              className="input-field" required
+              className={`input-field ${errors.osVersion ? 'border-[#f85149] focus:border-[#f85149]' : ''}`}
+              required
+              maxLength={40}
+              pattern="^[A-Za-z0-9 .()+\-_,]+$"
+              title="Contoh: Windows 11 atau Ubuntu 22.04"
             />
+            {errors.osVersion && <p className="text-[11px] text-[#f85149] mt-1">{errors.osVersion}</p>}
           </div>
 
           {/* CPU */}
@@ -82,8 +141,13 @@ const DeviceSpecForm = ({ onSubmit }) => {
             <input
               type="text" name="cpu" value={specs.cpu} onChange={handleChange}
               placeholder="e.g. Intel i7-12700K"
-              className="input-field" required
+              className={`input-field ${errors.cpu ? 'border-[#f85149] focus:border-[#f85149]' : ''}`}
+              required
+              maxLength={40}
+              pattern="^[A-Za-z0-9 .()+\-_/]+$"
+              title="Contoh: Intel i7-12700K atau AMD Ryzen 5 5600X"
             />
+            {errors.cpu && <p className="text-[11px] text-[#f85149] mt-1">{errors.cpu}</p>}
           </div>
 
           {/* GPU */}
@@ -92,8 +156,13 @@ const DeviceSpecForm = ({ onSubmit }) => {
             <input
               type="text" name="gpu" value={specs.gpu} onChange={handleChange}
               placeholder="e.g. NVIDIA RTX 3060"
-              className="input-field" required
+              className={`input-field ${errors.gpu ? 'border-[#f85149] focus:border-[#f85149]' : ''}`}
+              required
+              maxLength={40}
+              pattern="^[A-Za-z0-9 .()+\-_/]+$"
+              title="Contoh: NVIDIA RTX 3060 atau Intel Iris Xe"
             />
+            {errors.gpu && <p className="text-[11px] text-[#f85149] mt-1">{errors.gpu}</p>}
           </div>
 
           {/* RAM */}
@@ -102,8 +171,13 @@ const DeviceSpecForm = ({ onSubmit }) => {
             <input
               type="text" name="ram" value={specs.ram} onChange={handleChange}
               placeholder="e.g. 16GB"
-              className="input-field" required
+              className={`input-field ${errors.ram ? 'border-[#f85149] focus:border-[#f85149]' : ''}`}
+              required
+              maxLength={10}
+              pattern="^[1-9]\d*\s*GB$"
+              title="Contoh: 8GB atau 16 GB"
             />
+            {errors.ram && <p className="text-[11px] text-[#f85149] mt-1">{errors.ram}</p>}
           </div>
 
           {/* Compiler */}
@@ -137,9 +211,8 @@ const DeviceSpecForm = ({ onSubmit }) => {
         {/* Submit */}
         <button
           type="submit"
-          className={`w-full py-2.5 font-mono text-sm font-semibold rounded transition-all duration-200 ${
-            saved ? 'copy-success' : ''
-          }`}
+          className={`w-full py-2.5 font-mono text-sm font-semibold rounded transition-all duration-200 ${saved ? 'copy-success' : ''
+            }`}
           style={
             saved
               ? { background: '#1f3a2b', border: '1px solid #238636', color: '#4af626' }
