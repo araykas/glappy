@@ -90,7 +90,7 @@ const MessageBubble = ({ msg, onSuggestionClick }) => {
   const [copiedKey, setCopiedKey] = useState(null);
 
   const handleCopy = (text, key) => {
-    navigator.clipboard.writeText(text).catch(() => {});
+    navigator.clipboard.writeText(text).catch(() => { });
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 2000);
   };
@@ -179,7 +179,7 @@ const AIAssistant = ({ deviceSpecs, library, generatedCommands }) => {
   const inputRef = useRef(null);
 
   useEffect(() => {
-    try { localStorage.setItem(CHAT_KEY, JSON.stringify(messages.slice(-50))); } catch {}
+    try { localStorage.setItem(CHAT_KEY, JSON.stringify(messages.slice(-50))); } catch { }
   }, [messages]);
 
   useEffect(() => {
@@ -192,17 +192,20 @@ const AIAssistant = ({ deviceSpecs, library, generatedCommands }) => {
   const handleSend = async () => {
     if (!input.trim()) return;
     const userMsg = { role: 'user', content: input };
+    const chatHistory = messages.slice(-10).map(({ role, content }) => ({ role, content }));
     setMessages(prev => [...prev, userMsg]);
     const cur = input;
     setInput('');
     setIsLoading(true);
     try {
+      const pageTitle = typeof document === 'undefined' ? '' : document.title;
       const res = await apiRequest(API_ENDPOINTS.aiChat, {
         method: 'POST',
         body: JSON.stringify({
           message: cur,
           sessionId: getSessionId(),
-          context: { deviceSpecs, library, generatedCommands },
+          chatHistory,
+          context: { deviceSpecs, library, generatedCommands, pageTitle },
         }),
       });
       const aiContent = res?.data?.aiResponse ?? res?.aiResponse ?? 'No response.';
@@ -223,7 +226,7 @@ const AIAssistant = ({ deviceSpecs, library, generatedCommands }) => {
   const handleKey = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } };
   const clearChat = () => {
     setMessages([INIT_MSG]);
-    try { localStorage.removeItem(CHAT_KEY); } catch {}
+    try { localStorage.removeItem(CHAT_KEY); } catch { }
   };
 
   return (

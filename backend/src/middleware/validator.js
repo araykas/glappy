@@ -23,5 +23,15 @@ export const validateCommandGeneration = [
 export const validateAIChat = [
   body('message').notEmpty().withMessage('Message is required'),
   body('context').optional().isObject().withMessage('Context must be an object'),
+  body('chatHistory').optional().isArray().withMessage('Chat history must be an array'),
+  body('chatHistory.*.role')
+    .optional()
+    .isString()
+    .isIn(['user', 'assistant'])
+    .withMessage('Chat history roles must be either user or assistant'),
+  body('chatHistory.*.content')
+    .optional()
+    .notEmpty()
+    .withMessage('Chat history content must be provided'),
   validateRequest
 ];

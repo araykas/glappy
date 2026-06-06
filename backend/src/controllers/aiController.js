@@ -4,10 +4,11 @@ import { isSupabaseConfigured } from '../config/supabase.js';
 
 export const chatWithAI = async (req, res, next) => {
   try {
-    const { message, context, sessionId } = req.body;
+    const { message, context, sessionId, chatHistory } = req.body;
+    const requestContext = { ...context, chatHistory };
 
     // Generate AI response — Groq jika dikonfigurasi, fallback ke rule-based
-    const response = await generateAIResponse(message, context);
+    const response = await generateAIResponse(message, requestContext);
 
     // Hanya simpan ke DB kalau pertanyaan relevan (bukan off-topic)
     // Tidak ada gunanya nyimpen percakapan yang tidak relevan
@@ -28,7 +29,8 @@ export const chatWithAI = async (req, res, next) => {
         timestamp: new Date().toISOString(),
         context: {
           library: context?.library?.name || null,
-          os: context?.deviceSpecs?.os || null
+          os: context?.deviceSpecs?.os || null,
+          pageTitle: context?.pageTitle || null,
         }
       }
     });

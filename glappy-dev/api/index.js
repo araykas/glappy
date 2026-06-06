@@ -70,26 +70,26 @@ const getLibraryById = (id) => LIBRARIES_STATIC.find(l => l.id === id);
 
 // ── Topic Filter ────────────────────────────────────────
 const RELEVANT_KEYWORDS = [
-  'opengl','vulkan','directx','dx12','dx11','glfw','glew','glad','sdl',
-  'install','instalasi','setup','download','unduh',
-  'compile','build','kompilasi','gcc','g++','msvc','clang','mingw',
-  'error','gagal','failed','crash','bug','masalah','problem','issue',
-  'link','linker','undefined reference','unresolved external','lib','.dll','.so','.a',
-  'cmake','makefile','vcpkg','apt','brew','homebrew','pkg-config',
-  'path','environment','env','variable','not found','tidak ditemukan',
-  'gpu','graphics','grafis','driver','shader','render',
-  'windows','linux','macos','ubuntu','debian',
-  'include','header','.h','dependency','dependencies',
-  'code','kode','program','project','proyek','cpp','c++',
+  'opengl', 'vulkan', 'directx', 'dx12', 'dx11', 'glfw', 'glew', 'glad', 'sdl',
+  'install', 'instalasi', 'setup', 'download', 'unduh',
+  'compile', 'build', 'kompilasi', 'gcc', 'g++', 'msvc', 'clang', 'mingw',
+  'error', 'gagal', 'failed', 'crash', 'bug', 'masalah', 'problem', 'issue',
+  'link', 'linker', 'undefined reference', 'unresolved external', 'lib', '.dll', '.so', '.a',
+  'cmake', 'makefile', 'vcpkg', 'apt', 'brew', 'homebrew', 'pkg-config',
+  'path', 'environment', 'env', 'variable', 'not found', 'tidak ditemukan',
+  'gpu', 'graphics', 'grafis', 'driver', 'shader', 'render',
+  'windows', 'linux', 'macos', 'ubuntu', 'debian',
+  'include', 'header', '.h', 'dependency', 'dependencies',
+  'code', 'kode', 'program', 'project', 'proyek', 'cpp', 'c++',
 ];
 const IRRELEVANT_KEYWORDS = [
-  'makan','minum','masak','resep','makanan','minuman','restoran','warung',
-  'film','movie','musik','lagu','drama','anime',
-  'politik','berita','news','artis','selebritis','gosip',
-  'cuaca','weather','hujan',
-  'bola','sepakbola','basket','olahraga','sport',
-  'saham','crypto','bitcoin','investasi','trading',
-  'sakit','obat','dokter','rumah sakit',
+  'makan', 'minum', 'masak', 'resep', 'makanan', 'minuman', 'restoran', 'warung',
+  'film', 'movie', 'musik', 'lagu', 'drama', 'anime',
+  'politik', 'berita', 'news', 'artis', 'selebritis', 'gosip',
+  'cuaca', 'weather', 'hujan',
+  'bola', 'sepakbola', 'basket', 'olahraga', 'sport',
+  'saham', 'crypto', 'bitcoin', 'investasi', 'trading',
+  'sakit', 'obat', 'dokter', 'rumah sakit',
 ];
 
 const isRelevant = (msg) => {
@@ -122,6 +122,7 @@ Topik yang bisa saya bantu:
 // ── AI Response ─────────────────────────────────────────
 const SYSTEM_PROMPT = `Kamu adalah AI assistant ahli untuk membantu instalasi dan troubleshooting graphics library seperti OpenGL, Vulkan, dan DirectX.
 Bantu user mengatasi error instalasi, compile error, linking error, setup environment variables, konfigurasi CMake.
+Perhatikan riwayat percakapan sebelumnya agar jawaban tetap konsisten dengan pilihan user.
 Jawab dalam Bahasa Indonesia, step-by-step, praktis. Maksimal 400 kata.
 Jika pertanyaan di luar topik, tolak dengan sopan.`;
 
@@ -130,11 +131,14 @@ const generateAIResponse = async (message, context = {}) => {
 
   if (groq) {
     try {
-      const { deviceSpecs, library } = context;
+      const { deviceSpecs, library, chatHistory } = context;
+      const historyMessages = Array.isArray(chatHistory)
+        ? chatHistory.slice(-10).map(({ role, content }) => ({ role, content }))
+        : [];
       const ctxLines = [
-        deviceSpecs?.os  ? `OS: ${deviceSpecs.os}`  : null,
+        deviceSpecs?.os ? `OS: ${deviceSpecs.os}` : null,
         deviceSpecs?.gpu ? `GPU: ${deviceSpecs.gpu}` : null,
-        library?.name    ? `Library: ${library.name}` : null,
+        library?.name ? `Library: ${library.name}` : null,
       ].filter(Boolean).join('\n');
 
       const fullMsg = ctxLines ? `[Konteks]\n${ctxLines}\n\n[Pertanyaan]\n${message}` : message;
@@ -143,6 +147,7 @@ const generateAIResponse = async (message, context = {}) => {
         model: 'llama-3.3-70b-versatile',
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
+          ...historyMessages,
           { role: 'user', content: fullMsg },
         ],
         temperature: 0.5,
@@ -350,11 +355,13 @@ app.post(['/commands/generate', '/api/commands/generate'],
 // ── AI Chat ──
 app.post(['/ai/chat', '/api/ai/chat'],
   body('message').notEmpty().withMessage('Message is required'),
+  body('chatHistory').optional().isArray().withMessage('Chat history must be an array'),
   async (req, res) => {
     if (!validate(req, res)) return;
     try {
-      const { message, context, sessionId } = req.body;
-      const response = await generateAIResponse(message, context || {});
+      const { message, context, sessionId, chatHistory } = req.body;
+      const requestContext = { ...context, chatHistory };
+      const response = await generateAIResponse(message, requestContext);
 
       if (isSupabaseConfigured() && sessionId && !response.offTopic) {
         await supabase.from('ai_chat_history').insert({

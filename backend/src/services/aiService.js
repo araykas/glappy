@@ -115,6 +115,7 @@ PENTING:
 - Jika konteks menyebutkan commands yang sudah ditampilkan ke user (berisi vcpkg, apt, brew, dll), gunakan informasi itu untuk memberikan jawaban relevan — misalnya cara manual tanpa package manager tersebut.
 - JANGAN tolak pertanyaan yang masih berkaitan dengan instalasi, setup, atau konfigurasi graphics library meskipun menggunakan kata "tanpa", "alternatif", "selain", "manual", atau "without".
 - SANGAT PENTING: Selalu perhatikan OS user dari konteks. Jika OS adalah Windows, HANYA berikan instruksi Windows — jangan sertakan instruksi Linux/macOS kecuali user secara eksplisit meminta. Begitu juga sebaliknya.
+- Perhatikan juga riwayat percakapan sebelumnya agar jawaban tetap konsisten dengan pilihan user.
 
 Format jawaban:
 - Gunakan numbering untuk langkah-langkah
@@ -125,16 +126,21 @@ Format jawaban:
 Tolak dengan sopan HANYA jika pertanyaan benar-benar tidak ada hubungannya dengan instalasi library, graphics programming, build system, atau C/C++ development (contoh: resep masakan, cuaca, berita politik).`;
 
 export const generateAIResponseWithGroq = async (message, context = {}) => {
-  const { deviceSpecs, library, generatedCommands } = context;
+  const { deviceSpecs, library, generatedCommands, pageTitle, chatHistory } = context;
+
+  const historyMessages = Array.isArray(chatHistory)
+    ? chatHistory.slice(-10).map(({ role, content }) => ({ role, content }))
+    : [];
 
   const userContext = [
-    deviceSpecs?.os        ? `OS: ${deviceSpecs.os}${deviceSpecs.osVersion ? ` ${deviceSpecs.osVersion}` : ''}` : null,
-    deviceSpecs?.cpu       ? `CPU: ${deviceSpecs.cpu}`       : null,
-    deviceSpecs?.gpu       ? `GPU: ${deviceSpecs.gpu}`       : null,
-    deviceSpecs?.ram       ? `RAM: ${deviceSpecs.ram}`       : null,
-    deviceSpecs?.compiler  ? `Compiler: ${deviceSpecs.compiler}` : null,
-    deviceSpecs?.ide       ? `IDE: ${deviceSpecs.ide}`       : null,
-    library?.name          ? `Library yang dipilih: ${library.name}` : null,
+    deviceSpecs?.os ? `OS: ${deviceSpecs.os}${deviceSpecs.osVersion ? ` ${deviceSpecs.osVersion}` : ''}` : null,
+    deviceSpecs?.cpu ? `CPU: ${deviceSpecs.cpu}` : null,
+    deviceSpecs?.gpu ? `GPU: ${deviceSpecs.gpu}` : null,
+    deviceSpecs?.ram ? `RAM: ${deviceSpecs.ram}` : null,
+    deviceSpecs?.compiler ? `Compiler: ${deviceSpecs.compiler}` : null,
+    deviceSpecs?.ide ? `IDE: ${deviceSpecs.ide}` : null,
+    library?.name ? `Library yang dipilih: ${library.name}` : null,
+    pageTitle ? `Judul halaman: ${pageTitle}` : null,
   ].filter(Boolean).join('\n');
 
   // Sertakan ringkasan commands yang sudah di-generate agar AI tahu konteks penuh
@@ -150,6 +156,7 @@ export const generateAIResponseWithGroq = async (message, context = {}) => {
     model: 'llama-3.3-70b-versatile',
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
+      ...historyMessages,
       { role: 'user', content: fullMessage },
     ],
     temperature: 0.5,
@@ -230,13 +237,29 @@ export const generateAIResponse = async (message, context = {}) => {
 // Dipakai kalau Groq belum dikonfigurasi atau error
 // ============================================
 
+const getPreferredPackageManager = (chatHistory = []) => {
+  const normalized = chatHistory
+    .map(entry => (entry.content || '').toLowerCase())
+    .join(' ');
+
+  if (normalized.includes('chocolatey')) return 'chocolatey';
+  if (normalized.includes('vcpkg')) return 'vcpkg';
+  if (normalized.includes('apt')) return 'apt';
+  if (normalized.includes('brew')) return 'brew';
+  return null;
+};
+
 const getRuleBasedResponse = (message, context = {}) => {
   const lower = message.toLowerCase();
-  const { deviceSpecs, library } = context;
+  const { deviceSpecs, library, chatHistory } = context;
+  const preferredPackageManager = getPreferredPackageManager(chatHistory);
+  const packageManagerHint = preferredPackageManager
+    ? `Gunakan ${preferredPackageManager} sesuai pilihan sebelumnya.\n\n`
+    : '';
 
   // Deteksi pertanyaan "tanpa vcpkg" / "alternatif package manager"
   if ((lower.includes('tanpa') || lower.includes('without') || lower.includes('alternatif') || lower.includes('selain')) &&
-      (lower.includes('vcpkg') || lower.includes('apt') || lower.includes('brew') || lower.includes('package'))) {
+    (lower.includes('vcpkg') || lower.includes('apt') || lower.includes('brew') || lower.includes('package'))) {
     const os = deviceSpecs?.os?.toLowerCase() || '';
     const isWindows = os.includes('windows') || os === '';
     const isLinux = os.includes('linux') || os.includes('ubuntu') || os.includes('debian');
@@ -336,7 +359,7 @@ ${manualSteps}
 
   if (lower.includes('error') || lower.includes('gagal') || lower.includes('failed')) {
     return {
-      message: `Untuk mengatasi error instalasi ${library?.name || 'library'}:
+      message: `${packageManagerHint}Untuk mengatasi error instalasi ${library?.name || 'library'}:
 
 1. **Pastikan semua dependencies sudah terinstall**
    - Cek apakah package manager sudah terinstall (vcpkg/apt/brew)
