@@ -117,10 +117,10 @@ const buildConversationPreferences = (chatHistory = []) => {
 };
 
 // ============================================
-// GROQ AI RESPONSE
+// GROQ AI RESPONSE (dynamic system prompt)
 // ============================================
 
-const SYSTEM_PROMPT = `Kamu adalah AI assistant ahli untuk membantu instalasi dan troubleshooting graphics library seperti OpenGL, Vulkan, dan DirectX.
+const buildBaseSystemPrompt = () => `Kamu adalah AI assistant ahli untuk membantu instalasi dan troubleshooting graphics library seperti OpenGL, Vulkan, dan DirectX.
 
 Tugas kamu:
 - Bantu user mengatasi error instalasi, compile error, linking error
@@ -146,11 +146,22 @@ Format jawaban:
 
 Tolak dengan sopan HANYA jika pertanyaan benar-benar tidak ada hubungannya dengan instalasi library, graphics programming, build system, atau C/C++ development (contoh: resep masakan, cuaca, berita politik).`;
 
+const buildSystemPrompt = (currentPackageManager) => {
+  const base = buildBaseSystemPrompt();
+  const managerHint = currentPackageManager
+    ? `\n\nSTATE: currentPackageManager=${currentPackageManager}. Selalu jawab dengan solusi, commands, dan path yang sesuai dengan package manager terakhir yang dibahas atau dipilih oleh user. Jika user meminta alternatif, jelaskan langkah spesifik untuk alternatif yang diminta, tetapi referensi utama tetap ke ${currentPackageManager}.`
+    : `\n\nSTATE: currentPackageManager=unknown. Jika user menyebut package manager tertentu, gunakan itu sebagai referensi utama.`;
+
+  return base + managerHint;
+};
+
 export const generateAIResponseWithGroq = async (message, context = {}) => {
   const { deviceSpecs, library, generatedCommands, pageTitle, chatHistory } = context;
 
+  // Expect `chatHistory` to be an array of { role: 'system'|'user'|'assistant', content }
+  // Keep the last 20 messages to preserve context but avoid huge payloads
   const historyMessages = Array.isArray(chatHistory)
-    ? chatHistory.slice(-10).map(({ role, content }) => ({ role, content }))
+    ? chatHistory.slice(-20).map(({ role, content }) => ({ role, content }))
     : [];
 
   const userContext = [
@@ -178,14 +189,21 @@ export const generateAIResponseWithGroq = async (message, context = {}) => {
     ? [{ role: 'system', content: preferenceSummary }]
     : [];
 
+  // Build a system prompt that encodes the current package manager state
+  const currentPackageManager = context.currentPackageManager || null;
+  const dynamicSystemPrompt = buildSystemPrompt(currentPackageManager);
+
+  const messagesForModel = [
+    { role: 'system', content: dynamicSystemPrompt },
+    ...preferenceMessage,
+    // preserve prior system/user/assistant turns so model keeps full conversational context
+    ...historyMessages,
+    { role: 'user', content: fullMessage },
+  ];
+
   const completion = await groq.chat.completions.create({
     model: 'llama-3.3-70b-versatile',
-    messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
-      ...preferenceMessage,
-      ...historyMessages,
-      { role: 'user', content: fullMessage },
-    ],
+    messages: messagesForModel,
     temperature: 0.5,
     max_tokens: 600,
   });
