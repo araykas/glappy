@@ -158,10 +158,8 @@ const buildSystemPrompt = (currentPackageManager) => {
 export const generateAIResponseWithGroq = async (message, context = {}) => {
   const { deviceSpecs, library, generatedCommands, pageTitle, chatHistory } = context;
 
-  // Expect `chatHistory` to be an array of { role: 'system'|'user'|'assistant', content }
-  // Keep the last 20 messages to preserve context but avoid huge payloads
   const historyMessages = Array.isArray(chatHistory)
-    ? chatHistory.slice(-20).map(({ role, content }) => ({ role, content }))
+    ? chatHistory.slice(-10).map(({ role, content }) => ({ role, content }))
     : [];
 
   const userContext = [
@@ -189,21 +187,19 @@ export const generateAIResponseWithGroq = async (message, context = {}) => {
     ? [{ role: 'system', content: preferenceSummary }]
     : [];
 
-  // Build a system prompt that encodes the current package manager state
-  const currentPackageManager = context.currentPackageManager || null;
-  const dynamicSystemPrompt = buildSystemPrompt(currentPackageManager);
-
-  const messagesForModel = [
-    { role: 'system', content: dynamicSystemPrompt },
-    ...preferenceMessage,
-    // preserve prior system/user/assistant turns so model keeps full conversational context
-    ...historyMessages,
-    { role: 'user', content: fullMessage },
-  ];
+  // Deteksi package manager dari history untuk state-aware prompt
+  const currentPackageManager = getPreferredPackageManager(
+    Array.isArray(chatHistory) ? chatHistory.map(h => ({ content: h.content || '' })) : []
+  );
 
   const completion = await groq.chat.completions.create({
     model: 'llama-3.3-70b-versatile',
-    messages: messagesForModel,
+    messages: [
+      { role: 'system', content: buildSystemPrompt(currentPackageManager) },
+      ...preferenceMessage,
+      ...historyMessages,
+      { role: 'user', content: fullMessage },
+    ],
     temperature: 0.5,
     max_tokens: 600,
   });
