@@ -112,17 +112,15 @@ npm run dev        # http://localhost:5000
 
 **Setup Menu** — Isi spesifikasi device (OS, CPU, GPU, compiler) sebelum generate command
 
-<img width="1909" height="879" alt="Setup Menu" src="https://github.com/user-attachments/assets/a38ddfb3-9362-483e-8ea0-69a45d17ff8d" />
+<img width="1909" height="879" alt="Setup Menu" src="https://github.com/user-attachments/assets/8bf31278-2817-4e25-b506-7957c52cb8be" />
 
 **Commands Menu** — Installation script ter-generate otomatis sesuai hardware kamu
 
-<img width="1912" height="876" alt="Commands Menu" src="https://github.com/user-attachments/assets/0601012b-9143-4f13-bdb7-d15ef9c509b3" />
+<img width="1912" height="876" alt="Commands Menu" src="https://github.com/user-attachments/assets/bf31ee70-4346-4ebb-ad58-b5888727c2c3" />
 
 **Glappy Assist** — Floating AI troubleshooter untuk analisis error compile dan konfigurasi
 
-<img width="626" height="701" alt="Glappy Assist - AI Troubleshooter" src="https://github.com/user-attachments/assets/a1f34f1d-b9f9-42cd-9829-92047559ee63" />
-
-
+<img width="626" height="701" alt="Glappy Assist - AI Troubleshooter" src="https://github.com/user-attachments/assets/a2391842-be49-40f0-97c2-0a3dc2c9f36b" />
 
 ---
 
