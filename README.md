@@ -120,7 +120,7 @@ npm run dev        # http://localhost:5000
 
 **Glappy Assist** — Floating AI troubleshooter untuk analisis error compile dan konfigurasi
 
-<img width="626" height="701" alt="Glappy Assist - AI Troubleshooter" src="https://github.com/user-attachments/assets/a2391842-be49-40f0-97c2-0a3dc2c9f36b" />
+<img width="1912" height="876" alt="Glappy Assist - AI Troubleshooter" src="https://github.com/user-attachments/assets/a2391842-be49-40f0-97c2-0a3dc2c9f36b" />
 
 ---
 
